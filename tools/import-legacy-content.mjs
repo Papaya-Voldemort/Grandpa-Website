@@ -132,6 +132,38 @@ function extractMainHtml($) {
   return container.html() ?? "";
 }
 
+function extractStandalonePageHtml($) {
+  const page = $("#content-page").first();
+  if (!page.length) {
+    return extractMainHtml($);
+  }
+
+  const children = page.children().toArray();
+  const startIndex = children.findIndex((node) => {
+    const element = $(node);
+    return element.is("#sub-main") || element.is("div.article") || element.is("div.content");
+  });
+
+  if (startIndex === -1) {
+    return extractMainHtml($);
+  }
+
+  const fragments = [];
+  for (let index = startIndex; index < children.length; index += 1) {
+    const child = children[index];
+    const element = $(child);
+    if (element.hasClass("footer")) {
+      break;
+    }
+    if (element.is("script") || element.is("noscript")) {
+      continue;
+    }
+    fragments.push($.html(child));
+  }
+
+  return fragments.join("\n");
+}
+
 function extractExcerpt($, html) {
   const fragment = cheerio.load(`<div>${html}</div>`, { decodeEntities: false });
   const candidates = fragment("p, blockquote, li, h3, h2").toArray();
@@ -183,7 +215,7 @@ function buildRecord(filePath, html) {
   const base = path.basename(filePath, ".html");
   const $ = cheerio.load(html, { decodeEntities: false });
   const title = extractTitle($, humanizeSlug(base));
-  const mainHtml = extractMainHtml($);
+  const mainHtml = pageSlugs.has(base) ? extractStandalonePageHtml($) : extractMainHtml($);
   const excerpt = extractExcerpt($, mainHtml);
   const publishedAt = extractPublishedAt(cleanText($.text()));
   const bodyFragment = cheerio.load(`<div>${mainHtml}</div>`, { decodeEntities: false });

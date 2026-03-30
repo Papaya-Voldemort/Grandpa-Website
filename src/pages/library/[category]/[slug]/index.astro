@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { getCategoryInfo } from "../../../../lib/categories";
+import { getPostByCategoryAndSlug } from "../../../../lib/posts-server";
+
+export const prerender = false;
+
+const category = Astro.params.category ?? "";
+const slug = Astro.params.slug ?? "";
+const post = await getPostByCategoryAndSlug(category, slug);
+
+if (!post) {
+  return new Response("Not found", { status: 404 });
+}
+
+const info = getCategoryInfo(category);
+---
+
+<BaseLayout title={`${post.title} | Stephen M. Bird`} description={post.excerpt} pageClass={`post-${slug}`}>
+  <div class="panel legacy-body">
+    <img src={info.headerImage} alt={info.label} />
+    <h1>{post.title}</h1>
+    <p class="meta">{info.label}{post.publishedAt ? ` · ${new Date(post.publishedAt).toLocaleDateString("en-US")}` : ""}</p>
+    <article class="article-body" set:html={post.contentHtml} />
+  </div>
+</BaseLayout>

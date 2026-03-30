@@ -1,0 +1,123 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import RichTextEditor from "../../../components/RichTextEditor";
+import { requireAdminSession } from "../../../lib/auth";
+import { categories } from "../../../lib/categories";
+import { getPostBySlug } from "../../../lib/posts-server";
+
+export const prerender = false;
+
+const session = await requireAdminSession(Astro.cookies);
+if (!session) {
+  return Response.redirect(new URL("/admin/login/", Astro.url), 302);
+}
+
+const slug = Astro.params.slug ?? "";
+const post = await getPostBySlug(slug);
+const selectedCategory = categories.find((category) => category.slug === post?.category) ?? categories[0];
+---
+
+<BaseLayout title={`${post?.title ?? "Edit Post"} | Stephen M. Bird`} pageClass="admin-editor" showSidebar={false}>
+  <div class="panel">
+    <h1>{post ? "Edit Post" : "New Post"}</h1>
+
+    <form class="form-grid card" method="post" action="/api/posts/save">
+      <input type="hidden" name="originalSlug" value={post?.slug ?? ""} />
+      <label>
+        Title
+        <input type="text" name="title" value={post?.title ?? ""} required />
+      </label>
+
+      <label>
+        Slug
+        <input type="text" name="slug" value={post?.slug ?? slug} />
+      </label>
+
+      <label>
+        Category
+        <select name="category" required>
+          <option value="">Choose a category</option>
+          {categories.map((category) => (
+            <option value={category.slug} selected={category.slug === post?.category}>
+              {category.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        Category label
+        <input type="text" name="categoryLabel" value={post?.categoryLabel ?? selectedCategory.label} />
+      </label>
+
+      <label>
+        Excerpt
+        <textarea name="excerpt">{post?.excerpt ?? ""}</textarea>
+      </label>
+
+      <label>
+        Cover image URL
+        <input type="url" name="coverImage" value={post?.coverImage ?? ""} />
+      </label>
+
+      <label>
+        Status
+        <select name="status">
+          <option value="draft" selected={post?.status === "draft"}>Draft</option>
+          <option value="published" selected={post?.status === "published"}>Published</option>
+          <option value="archived" selected={post?.status === "archived"}>Archived</option>
+        </select>
+      </label>
+
+      <label>
+        Legacy source path
+        <input type="text" name="legacySourcePath" value={post?.legacySourcePath ?? ""} />
+      </label>
+
+      <label>
+        Legacy URL
+        <input type="url" name="legacyUrl" value={post?.legacyUrl ?? ""} />
+      </label>
+
+      <label>
+        Sort order
+        <input type="number" name="sortOrder" value={post?.sortOrder ?? 0} />
+      </label>
+
+      <label>
+        Published at
+        <input type="datetime-local" name="publishedAt" value={post?.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 16) : ""} />
+      </label>
+
+      <label>
+        Archived at
+        <input type="datetime-local" name="archivedAt" value={post?.archivedAt ? new Date(post.archivedAt).toISOString().slice(0, 16) : ""} />
+      </label>
+
+      <div>
+        <h2>Content</h2>
+        <RichTextEditor client:load initialContent={post?.contentHtml || "<p>Write the post here.</p>"} />
+      </div>
+
+      <div class="admin-grid">
+        <button type="submit">Save Changes</button>
+        <a class="action-button" href={`/library/${post?.category ?? selectedCategory.slug}/${post?.slug ?? slug}/`}>View Public Page</a>
+      </div>
+    </form>
+
+    {post ? (
+      <div class="card admin-grid">
+        <form method="post" action="/api/posts/archive">
+          <input type="hidden" name="slug" value={post.slug} />
+          <input type="hidden" name="archived" value={post.status !== "archived" ? "true" : "false"} />
+          <button type="submit">{post.status === "archived" ? "Unarchive" : "Archive"}</button>
+        </form>
+
+        <form method="post" action="/api/posts/delete" onsubmit="return confirm('Delete this post permanently?');">
+          <input type="hidden" name="slug" value={post.slug} />
+          <button type="submit">Delete Post</button>
+        </form>
+      </div>
+    ) : null}
+  </div>
+</BaseLayout>

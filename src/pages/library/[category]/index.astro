@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PostCard from "../../../components/PostCard.astro";
+import { getCategoryInfo } from "../../../lib/categories";
+import { getPostsForCategory } from "../../../lib/posts-server";
+
+export const prerender = false;
+
+const category = Astro.params.category ?? "";
+const info = getCategoryInfo(category);
+const posts = await getPostsForCategory(category);
+---
+
+<BaseLayout title={`${info.label} | Stephen M. Bird`} description={info.intro} pageClass={`category-${category}`}>
+  <div class="panel">
+    <img src={info.headerImage} alt={info.label} />
+    <h1>{info.label}</h1>
+    <p>{info.intro}</p>
+
+    <section class="post-grid">
+      {posts.map((post) => <PostCard post={post} />)}
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCurrentSession } from "../../lib/auth";
+
+export const prerender = false;
+
+const session = await getCurrentSession(Astro.cookies);
+if (session) {
+  return Response.redirect(new URL("/admin/", Astro.url), 302);
+}
+---
+
+<BaseLayout title="Admin Login | Stephen M. Bird" pageClass="admin-login" showSidebar={false}>
+  <div class="panel">
+    <h1>Admin Login</h1>
+    <p>Sign in to manage posts, archive old stories, and publish new ones.</p>
+
+    <form class="card auth-card" method="post" action="/api/admin/login">
+      <div class="form-grid">
+        <label>
+          Email
+          <input type="email" name="email" required />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" required />
+        </label>
+        <button type="submit">Sign In</button>
+      </div>
+    </form>
+  </div>
+</BaseLayout>

@@ -1,0 +1,116 @@
+---
+import "../styles/site.css";
+
+const {
+  title = "Stephen M. Bird",
+  description = "Stephen M. Bird | Prayers | Miracles | Family | Marriage | Happiness",
+  pageClass = "",
+  showSidebar = true,
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+  </head>
+  <body class={pageClass}>
+    <div class="site-shell" id="site-shell">
+      <header class="site-header">
+        <div class="logo">
+          <h1 class="logo">
+            <a href="/">
+              <img src="/logo.png" alt="Stephen M. Bird" />
+            </a>
+          </h1>
+        </div>
+        <div class="search">
+          <a href="https://twitter.com/stephenmbird" target="_blank" rel="noreferrer noopener">
+            <img src="/images/twitter-link-header.jpg" class="social" alt="Twitter" />
+          </a>
+          <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener">
+            <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
+          </a>
+          <form class="site-search-form" action="/search/" method="get">
+            <input type="search" name="q" placeholder="Search this site" />
+            <button type="submit">Search</button>
+          </form>
+        </div>
+      </header>
+
+      <nav class="navigation top">
+        <ul>
+          <li><a href="/">HOME</a></li>
+          <li><a href="/library/inspirational-stories/">INSPIRATIONAL STORIES</a></li>
+          <li><a href="/library/marriage-family/">MARRIAGE &amp; FAMILY</a></li>
+          <li><a href="/library/gospel-doctrine/">GOSPEL DOCTRINE</a></li>
+          <li><a href="/library/financial-ark/">FINANCIAL ARK</a></li>
+          <li><a href="/library/religion-society/">RELIGION &amp; SOCIETY</a></li>
+          <li><a href="/library/reading/">READING</a></li>
+          <li><a href="/library/my-book/">MY BOOK</a></li>
+        </ul>
+      </nav>
+
+      <main class={`content-card ${showSidebar ? "" : "panel"} ${pageClass}`.trim()}>
+        <slot />
+      </main>
+
+      <footer class="footer">
+        <div class="navigation bottom">
+          <ul>
+            <li><a href="/">HOME</a></li>
+            <li><a href="/library/inspirational-stories/">INSPIRATIONAL STORIES</a></li>
+            <li><a href="/library/gospel-doctrine/">GOSPEL DOCTRINE</a></li>
+            <li><a href="/library/marriage-family/">MARRIAGE &amp; FAMILY</a></li>
+            <li><a href="/library/financial-ark/">FINANCIAL ARK</a></li>
+            <li><a href="/library/religion-society/">RELIGION &amp; SOCIETY</a></li>
+            <li><a href="/library/reading/">READING</a></li>
+            <li><a href="/library/my-book/">MY BOOK</a></li>
+            <li><a href="/library/archives/">BROWSE ARCHIVES</a></li>
+            <li><a href="/admin/">ADMIN</a></li>
+          </ul>
+        </div>
+
+        <div class="footer content">
+          <div class="aboutPtbm">
+            <img src="/images/Prayers130w.jpg" alt="Prayers That Bring Miracles book cover" />
+            <h4>PRAYERS THAT BRING MIRACLES</h4>
+            <p>
+              In the spring of 1983, I finished my Master's degree in counseling at BYU and was accepted into the Navy as an LDS Chaplain.
+            </p>
+            <a href="/prayers-that-bring-miracles/">Read More &raquo;</a>
+          </div>
+
+          <div class="aboutMe">
+            <img src="/images/stephenmbirdphoto199h.jpg" alt="Stephen M. Bird" />
+            <h4>ABOUT ME</h4>
+            <p>
+              I was born and raised in Ogden, Utah. I graduated from Bonneville High School in June of 1967 and attended Weber State College.
+            </p>
+            <a href="/about-me/">Read More &raquo;</a>
+          </div>
+
+          <div class="moreInfo">
+            <h5>MORE INFORMATION</h5>
+            <ul>
+              <li><a class="topicalArchive" href="/library/archives/">BROWSE ARTICLES</a></li>
+              <li><a class="aboutWebsite" href="/about-this-website/">ABOUT THIS WEBSITE</a></li>
+              <li><a class="sendEmail" href="/contact/">SEND ME AN EMAIL</a></li>
+              <li><a class="buyBook" href="/library/my-book/how-to-obtain-a-copy.html">BUY MY BOOK</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="copyrightFooter">
+          <p>
+            Copyright &copy; 2011 Stephen M. Bird. All rights reserved. Designed and developed with Appwrite.
+          </p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

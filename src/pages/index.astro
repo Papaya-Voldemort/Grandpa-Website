@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
+import { getPublishedPosts } from "../lib/posts-server";
+
+const posts = await getPublishedPosts();
+const hero = posts[0];
+const featured = posts.slice(1, 6);
+---
+
+<BaseLayout title="Stephen M. Bird | Prayers | Miracles | Family | Marriage | Happiness">
+  <div class="panel">
+    <section class="article top">
+      <div class="topImage">
+        <img src="/images/cornucopia.jpg" alt="Cornucopia" />
+      </div>
+      <div class="topContent">
+        <h1>{hero?.title ?? "Every Day Is Thanksgiving"}</h1>
+        <h3>
+          {hero?.categoryLabel ?? "Featured Story"}
+          {hero?.publishedAt ? ` · ${new Date(hero.publishedAt).toLocaleDateString("en-US")}` : ""}
+        </h3>
+        <p>{hero?.excerpt ?? "Faith, gratitude, family, and miracles in everyday life."}</p>
+        {hero ? <p><a href={`/library/${hero.category}/${hero.slug}/`}>Read More &raquo;</a></p> : null}
+      </div>
+    </section>
+
+    <div class="clear"></div>
+
+    <section class="post-grid">
+      {featured.map((post) => <PostCard post={post} />)}
+    </section>
+
+    <div class="browseButton">
+      <a href="/library/archives/" class="browseMore">Browse More Articles &raquo;</a>
+    </div>
+  </div>
+</BaseLayout>

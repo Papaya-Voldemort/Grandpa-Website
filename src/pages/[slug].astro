@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getPageBySlug } from "../lib/posts-server";
+
+export const prerender = false;
+
+const slug = Astro.params.slug ?? "";
+const page = await getPageBySlug(slug);
+
+if (!page) {
+  return new Response("Not found", { status: 404 });
+}
+---
+
+<BaseLayout title={`${page.title} | Stephen M. Bird`} description={page.title}>
+  <div class="panel legacy-body">
+    <article class="article-body" set:html={page.contentHtml} />
+  </div>
+</BaseLayout>

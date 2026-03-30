@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCurrentSession } from "../../lib/auth";
+
+export const prerender = false;
+
+const session = await getCurrentSession(Astro.cookies);
+
+if (session) {
+  return Response.redirect(new URL("/admin/", Astro.url), 302);
+}
+---
+
+<BaseLayout title="Post Maker | Stephen M. Bird" pageClass="post-maker-hub" showSidebar={false}>
+  <div class="panel admin-hub">
+    <h1>Post Maker</h1>
+    <p>
+      This is the safe place to write, edit, archive, or delete posts without touching HTML files.
+    </p>
+    <p class="admin-notice">
+      If you are Stephen, sign in and the dashboard will open the editor, preview, and archive tools.
+    </p>
+    <p>
+      <a class="action-button" href="/admin/login/">Sign In to Post Maker</a>
+    </p>
+    <p>
+      <a href="/admin/">Open Dashboard</a>
+    </p>
+  </div>
+</BaseLayout>

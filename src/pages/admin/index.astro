@@ -13,16 +13,16 @@ if (!session) {
 const posts = await getAllIncludingArchived();
 ---
 
-<BaseLayout title="Admin | Stephen M. Bird" pageClass="admin-home" showSidebar={false}>
+<BaseLayout title="Post Maker | Stephen M. Bird" pageClass="admin-home" showSidebar={false}>
   <div class="panel">
-    <h1>Post Manager</h1>
+    <h1>Post Maker</h1>
     <p class="admin-notice">
       Signed in as <strong>{session.email ?? session.userId}</strong>. Use this dashboard to create, edit, archive, or delete posts.
     </p>
 
     <div class="admin-grid">
       <div class="card">
-        <p><a class="action-button" href="/admin/posts/new/">New Post</a></p>
+        <p><a class="action-button" href="/admin/posts/new/">Write a New Post</a></p>
         <form method="post" action="/api/admin/logout">
           <button type="submit">Sign Out</button>
         </form>

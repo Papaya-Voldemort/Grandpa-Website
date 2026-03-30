@@ -6,6 +6,7 @@ const {
   description = "Stephen M. Bird | Prayers | Miracles | Family | Marriage | Happiness",
   pageClass = "",
   showSidebar = true,
+  containerId = "content-page",
 } = Astro.props;
 ---
 
@@ -19,7 +20,7 @@ const {
     <meta name="robots" content="index, follow" />
   </head>
   <body class={pageClass}>
-    <div class="site-shell" id="site-shell">
+    <div id={containerId}>
       <header class="site-header">
         <div class="logo">
           <h1 class="logo">
@@ -35,6 +36,7 @@ const {
           <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener">
             <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
           </a>
+          <a class="admin-callout" href="/post-maker/">POST MAKER</a>
           <form class="site-search-form" action="/search/" method="get">
             <input type="search" name="q" placeholder="Search this site" />
             <button type="submit">Search</button>
@@ -55,7 +57,7 @@ const {
         </ul>
       </nav>
 
-      <main class={`content-card ${showSidebar ? "" : "panel"} ${pageClass}`.trim()}>
+      <main class={`page-body ${showSidebar ? "" : "panel"} ${pageClass}`.trim()}>
         <slot />
       </main>
 
@@ -71,7 +73,7 @@ const {
             <li><a href="/library/reading/">READING</a></li>
             <li><a href="/library/my-book/">MY BOOK</a></li>
             <li><a href="/library/archives/">BROWSE ARCHIVES</a></li>
-            <li><a href="/admin/">ADMIN</a></li>
+            <li><a href="/post-maker/">POST MAKER</a></li>
           </ul>
         </div>
 

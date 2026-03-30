@@ -1,0 +1,36 @@
+---
+import { getCanonicalPostPath, getPostByCategoryAndSlug, getPostBySlug } from "../../lib/posts-server";
+
+export const prerender = false;
+
+const raw = Astro.params.segments ?? [];
+const segments = Array.isArray(raw) ? raw : String(raw).split("/");
+const cleanSegments = segments.map((segment) => segment.trim()).filter(Boolean);
+
+if (cleanSegments.length === 0) {
+  return new Response("Not found", { status: 404 });
+}
+
+const slug = cleanSegments[cleanSegments.length - 1];
+const category = cleanSegments.slice(0, -1).join("/");
+
+if (slug.endsWith(".html")) {
+  const withoutExt = slug.slice(0, -5);
+  const canonical = await getPostBySlug(withoutExt);
+  if (canonical) {
+    return Astro.redirect(getCanonicalPostPath(canonical), 301);
+  }
+}
+
+const exactPost = category ? await getPostByCategoryAndSlug(category, slug) : null;
+if (exactPost) {
+  return Astro.redirect(getCanonicalPostPath(exactPost), 301);
+}
+
+const fallback = await getPostBySlug(slug);
+if (fallback) {
+  return Astro.redirect(getCanonicalPostPath(fallback), 301);
+}
+
+return new Response("Not found", { status: 404 });
+---

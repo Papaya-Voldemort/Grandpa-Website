@@ -1,10 +1,18 @@
-import { allLegacyPosts, getLegacyCategoryPosts, getLegacyPageBySlug, getLegacyPostBySlug } from "./content";
+import {
+  allLegacyPosts,
+  dedupeLegacyPosts,
+  getLegacyCategoryPosts,
+  getLegacyPageBySlug,
+  getLegacyPostBySlug,
+  normalizeLegacyHtml,
+} from "./content";
 import { createAdminServices, Query } from "./appwrite";
 import { getAppwriteConfig, isAppwriteConfigured } from "./env";
 import type { PostRecord, SitePage } from "./types";
 
 function normalizeRecord(record: any): PostRecord {
   const data = record?.data ?? record ?? {};
+  const sourcePath = data.legacySourcePath ?? data.legacyUrl ?? "";
   return {
     $id: record?.$id ?? data.$id ?? "",
     slug: data.slug ?? "",
@@ -12,7 +20,7 @@ function normalizeRecord(record: any): PostRecord {
     category: data.category ?? "",
     categoryLabel: data.categoryLabel ?? data.category ?? "",
     excerpt: data.excerpt ?? "",
-    contentHtml: data.contentHtml ?? "",
+    contentHtml: normalizeLegacyHtml(data.contentHtml ?? "", sourcePath),
     coverImage: data.coverImage ?? null,
     status: (data.status ?? "published") as PostRecord["status"],
     publishedAt: data.publishedAt ?? null,
@@ -23,6 +31,34 @@ function normalizeRecord(record: any): PostRecord {
     createdAt: record?.$createdAt ?? data.createdAt ?? "",
     updatedAt: record?.$updatedAt ?? data.updatedAt ?? "",
   };
+}
+
+function dedupePosts(posts: PostRecord[]) {
+  const bySlug = new Map<string, PostRecord>();
+  for (const post of posts) {
+    const existing = bySlug.get(post.slug);
+    if (!existing) {
+      bySlug.set(post.slug, post);
+      continue;
+    }
+
+    const candidateDepth = post.legacySourcePath?.split("/").filter(Boolean).length ?? 0;
+    const currentDepth = existing.legacySourcePath?.split("/").filter(Boolean).length ?? 0;
+    if (candidateDepth < currentDepth) {
+      bySlug.set(post.slug, post);
+      continue;
+    }
+
+    if (candidateDepth === currentDepth) {
+      const candidateCategoryDepth = post.category.split("/").filter(Boolean).length;
+      const currentCategoryDepth = existing.category.split("/").filter(Boolean).length;
+      if (candidateCategoryDepth < currentCategoryDepth) {
+        bySlug.set(post.slug, post);
+      }
+    }
+  }
+
+  return [...bySlug.values()];
 }
 
 export async function getAllPosts() {
@@ -38,7 +74,7 @@ export async function getAllPosts() {
       tableId,
       queries: [Query.orderDesc("publishedAt"), Query.orderDesc("$createdAt")],
     });
-    return result.rows.map(normalizeRecord);
+    return dedupePosts(result.rows.map(normalizeRecord));
   } catch {
     return getLegacyCategoryPostsFallback();
   }
@@ -47,6 +83,28 @@ export async function getAllPosts() {
 export async function getPublishedPosts() {
   const posts = await getAllPosts();
   return posts.filter((post) => post.status === "published");
+}
+
+export async function getLatestPosts(limit = 4) {
+  const posts = await getPublishedPosts();
+  return posts
+    .slice()
+    .sort((a, b) => {
+      const aPublished = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const bPublished = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      if (aPublished !== bPublished) {
+        return bPublished - aPublished;
+      }
+
+      const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (aCreated !== bCreated) {
+        return bCreated - aCreated;
+      }
+
+      return a.title.localeCompare(b.title);
+    })
+    .slice(0, limit);
 }
 
 export async function getPostsForCategory(category: string) {
@@ -126,11 +184,19 @@ export async function getPageBySlug(slug: string): Promise<SitePage | null> {
 }
 
 export function getLegacyCategoryPostsFallback() {
-  return allLegacyPosts().map((post) => ({
+  return dedupeLegacyPosts(allLegacyPosts()).map((post) => ({
     ...post,
     $id: post.slug,
     status: post.status ?? "published",
   }));
+}
+
+export function getCanonicalPostPath(post: { category: string; slug: string }) {
+  const overrides: Record<string, string> = {
+    "every-day-is-thanksgiving": "/library/my-book/every-day-is-thanksgiving/",
+  };
+
+  return overrides[post.slug] ?? `/library/${post.category}/${post.slug}/`;
 }
 
 export function getLegacyRedirectTarget(pathname: string) {

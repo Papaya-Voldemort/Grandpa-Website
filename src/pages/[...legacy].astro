@@ -27,5 +27,5 @@ if (!target) {
   return new Response("Not found", { status: 404 });
 }
 
-return Response.redirect(new URL(target, Astro.url), 301);
+return Astro.redirect(target, 301);
 ---

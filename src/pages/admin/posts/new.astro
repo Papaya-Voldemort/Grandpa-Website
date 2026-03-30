@@ -8,7 +8,7 @@ export const prerender = false;
 
 const session = await requireAdminSession(Astro.cookies);
 if (!session) {
-  return Response.redirect(new URL("/admin/login/", Astro.url), 302);
+  return Astro.redirect("/admin/login/", 302);
 }
 ---
 

@@ -51,6 +51,29 @@ export const categories: CategoryInfo[] = [
 ];
 
 export function getCategoryInfo(slug: string) {
+  if (slug.includes("/")) {
+    const [head, ...rest] = slug.split("/").filter(Boolean);
+    const base = categories.find((category) => category.slug === head);
+    if (base) {
+      const tail = rest
+        .map((segment) =>
+          segment
+            .split("-")
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" "),
+        )
+        .join(" / ");
+
+      return {
+        slug,
+        label: tail ? `${base.label} / ${tail}` : base.label,
+        headerImage: base.headerImage,
+        intro: base.intro,
+      };
+    }
+  }
+
   return (
     categories.find((category) => category.slug === slug) ?? {
       slug,

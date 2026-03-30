@@ -1,12 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getPublishedPosts } from "../lib/posts-server";
+import { getCanonicalPostPath, getLatestPosts } from "../lib/posts-server";
 
-const posts = await getPublishedPosts();
-const hero = posts[0];
-const left = posts[1];
-const middle = posts[2];
-const right = posts[3];
+const latestPosts = await getLatestPosts(4);
+const hero = latestPosts[0];
+const left = latestPosts[1];
+const middle = latestPosts[2];
+const right = latestPosts[3];
 ---
 
 <BaseLayout title="Stephen M. Bird | Prayers | Miracles | Family | Marriage | Happiness" containerId="home-page">
@@ -22,7 +22,7 @@ const right = posts[3];
       </h3>
       <p>{hero?.excerpt ?? "Faith, gratitude, family, and miracles in everyday life."}</p>
       {hero ? (
-        <p><a href={`/library/${hero.category}/${hero.slug}/`}>Read More &raquo;</a></p>
+        <p><a href={getCanonicalPostPath(hero)}>Read More &raquo;</a></p>
       ) : null}
     </div>
   </section>
@@ -32,10 +32,10 @@ const right = posts[3];
   <section class="article left">
     {left ? (
       <>
-        <h2><a href={`/library/${left.category}/${left.slug}/`}>{left.title}</a></h2>
+        <h2><a href={getCanonicalPostPath(left)}>{left.title}</a></h2>
         <h3>{left.categoryLabel}{left.publishedAt ? ` · ${new Date(left.publishedAt).toLocaleDateString("en-US")}` : ""}</h3>
         <p>{left.excerpt}</p>
-        <p><a href={`/library/${left.category}/${left.slug}/`}>Read More &raquo;</a></p>
+        <p><a href={getCanonicalPostPath(left)}>Read More &raquo;</a></p>
       </>
     ) : null}
   </section>
@@ -43,10 +43,10 @@ const right = posts[3];
   <section class="article middle">
     {middle ? (
       <>
-        <h2><a href={`/library/${middle.category}/${middle.slug}/`}>{middle.title}</a></h2>
+        <h2><a href={getCanonicalPostPath(middle)}>{middle.title}</a></h2>
         <h3>{middle.categoryLabel}{middle.publishedAt ? ` · ${new Date(middle.publishedAt).toLocaleDateString("en-US")}` : ""}</h3>
         <p>{middle.excerpt}</p>
-        <p><a href={`/library/${middle.category}/${middle.slug}/`}>Read More &raquo;</a></p>
+        <p><a href={getCanonicalPostPath(middle)}>Read More &raquo;</a></p>
       </>
     ) : null}
   </section>
@@ -54,10 +54,10 @@ const right = posts[3];
   <section class="article right">
     {right ? (
       <>
-        <h2><a href={`/library/${right.category}/${right.slug}/`}>{right.title}</a></h2>
+        <h2><a href={getCanonicalPostPath(right)}>{right.title}</a></h2>
         <h3>{right.categoryLabel}{right.publishedAt ? ` · ${new Date(right.publishedAt).toLocaleDateString("en-US")}` : ""}</h3>
         <p>{right.excerpt}</p>
-        <p><a href={`/library/${right.category}/${right.slug}/`}>Read More &raquo;</a></p>
+        <p><a href={getCanonicalPostPath(right)}>Read More &raquo;</a></p>
       </>
     ) : null}
   </section>

@@ -54,12 +54,46 @@ function rowIdFromValue(value) {
   return `${prefix}-${hash}`;
 }
 
+function segmentCount(value) {
+  return value.split("/").filter(Boolean).length;
+}
+
+function prefersCanonicalRecord(candidate, current) {
+  const candidateDepth = segmentCount(candidate.sourcePath ?? "");
+  const currentDepth = segmentCount(current.sourcePath ?? "");
+  if (candidateDepth !== currentDepth) {
+    return candidateDepth < currentDepth;
+  }
+
+  const candidateCategoryDepth = segmentCount(candidate.category ?? "");
+  const currentCategoryDepth = segmentCount(current.category ?? "");
+  if (candidateCategoryDepth !== currentCategoryDepth) {
+    return candidateCategoryDepth < currentCategoryDepth;
+  }
+
+  const candidateLegacyDepth = segmentCount(candidate.legacyUrl ?? "");
+  const currentLegacyDepth = segmentCount(current.legacyUrl ?? "");
+  if (candidateLegacyDepth !== currentLegacyDepth) {
+    return candidateLegacyDepth < currentLegacyDepth;
+  }
+
+  return String(candidate.title ?? "").localeCompare(String(current.title ?? "")) < 0;
+}
+
 async function main() {
   const legacyPosts = JSON.parse(
     await fs.readFile(new URL("../src/data/legacy-content.json", import.meta.url), "utf8"),
   );
+  const postsBySlug = new Map();
 
   for (const post of legacyPosts) {
+    const current = postsBySlug.get(post.slug);
+    if (!current || prefersCanonicalRecord(post, current)) {
+      postsBySlug.set(post.slug, post);
+    }
+  }
+
+  for (const post of postsBySlug.values()) {
     const payload = {
       slug: post.slug,
       title: post.title,

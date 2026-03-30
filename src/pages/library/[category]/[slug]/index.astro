@@ -1,26 +1,54 @@
 ---
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import PostCard from "../../../../components/PostCard.astro";
 import { getCategoryInfo } from "../../../../lib/categories";
-import { getPostByCategoryAndSlug } from "../../../../lib/posts-server";
+import {
+  getCanonicalPostPath,
+  getPostByCategoryAndSlug,
+  getPostBySlug,
+  getPostsForCategory,
+} from "../../../../lib/posts-server";
 
 export const prerender = false;
 
 const category = Astro.params.category ?? "";
 const slug = Astro.params.slug ?? "";
-const post = await getPostByCategoryAndSlug(category, slug);
+const exactPost = await getPostByCategoryAndSlug(category, slug);
+const nestedCategory = `${category}/${slug}`;
+const nestedPosts = exactPost ? [] : await getPostsForCategory(nestedCategory);
+const nestedInfo = getCategoryInfo(nestedCategory);
 
-if (!post) {
+if (!exactPost && nestedPosts.length === 0) {
+  const fallback = await getPostBySlug(slug);
+  if (fallback) {
+    return Astro.redirect(getCanonicalPostPath(fallback), 301);
+  }
+
   return new Response("Not found", { status: 404 });
 }
 
 const info = getCategoryInfo(category);
 ---
 
-<BaseLayout title={`${post.title} | Stephen M. Bird`} description={post.excerpt} pageClass={`post-${slug}`}>
-  <div class="panel legacy-body">
-    <img src={info.headerImage} alt={info.label} />
-    <h1>{post.title}</h1>
-    <p class="meta">{info.label}{post.publishedAt ? ` · ${new Date(post.publishedAt).toLocaleDateString("en-US")}` : ""}</p>
-    <article class="article-body" set:html={post.contentHtml} />
-  </div>
-</BaseLayout>
+{exactPost ? (
+  <BaseLayout title={`${exactPost.title} | Stephen M. Bird`} description={exactPost.excerpt} pageClass={`post-${slug}`}>
+    <div class="panel legacy-body">
+      <img src={info.headerImage} alt={info.label} />
+      <h1>{exactPost.title}</h1>
+      <p class="meta">{info.label}{exactPost.publishedAt ? ` · ${new Date(exactPost.publishedAt).toLocaleDateString("en-US")}` : ""}</p>
+      <article class="article-body" set:html={exactPost.contentHtml} />
+    </div>
+  </BaseLayout>
+) : (
+  <BaseLayout title={`${nestedInfo.label} | Stephen M. Bird`} description={nestedInfo.intro} pageClass={`category-${nestedCategory}`}>
+    <div class="panel">
+      <img src={nestedInfo.headerImage} alt={nestedInfo.label} />
+      <h1>{nestedInfo.label}</h1>
+      <p>{nestedInfo.intro}</p>
+
+      <section class="post-grid">
+        {nestedPosts.map((nestedPost) => <PostCard post={nestedPost} />)}
+      </section>
+    </div>
+  </BaseLayout>
+)}

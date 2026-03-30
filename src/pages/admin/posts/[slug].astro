@@ -3,13 +3,13 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import RichTextEditor from "../../../components/RichTextEditor";
 import { requireAdminSession } from "../../../lib/auth";
 import { categories } from "../../../lib/categories";
-import { getPostBySlug } from "../../../lib/posts-server";
+import { getCanonicalPostPath, getPostBySlug } from "../../../lib/posts-server";
 
 export const prerender = false;
 
 const session = await requireAdminSession(Astro.cookies);
 if (!session) {
-  return Response.redirect(new URL("/admin/login/", Astro.url), 302);
+  return Astro.redirect("/admin/login/", 302);
 }
 
 const slug = Astro.params.slug ?? "";
@@ -101,7 +101,7 @@ const selectedCategory = categories.find((category) => category.slug === post?.c
 
       <div class="admin-grid">
         <button type="submit">Save Changes</button>
-        <a class="action-button" href={`/library/${post?.category ?? selectedCategory.slug}/${post?.slug ?? slug}/`}>View Public Page</a>
+        <a class="action-button" href={post ? getCanonicalPostPath(post) : `/library/${selectedCategory.slug}/${slug}/`}>View Public Page</a>
       </div>
     </form>
 

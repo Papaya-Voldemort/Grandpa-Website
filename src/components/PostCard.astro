@@ -1,16 +1,18 @@
 ---
 import type { PostRecord, LegacyPost } from "../lib/types";
+import { getCanonicalPostPath } from "../lib/posts-server";
 
 const { post } = Astro.props as { post: PostRecord | LegacyPost & { $id?: string } };
+const postPath = getCanonicalPostPath(post);
 ---
 
 <article class="card article-teaser">
   {post.coverImage ? <img src={post.coverImage} alt={post.title} /> : null}
-  <h2><a href={`/library/${post.category}/${post.slug}/`}>{post.title}</a></h2>
+  <h2><a href={postPath}>{post.title}</a></h2>
   <p class="meta">
     {post.categoryLabel}
     {post.publishedAt ? ` · ${new Date(post.publishedAt).toLocaleDateString("en-US")}` : ""}
   </p>
   <p>{post.excerpt}</p>
-  <p><a href={`/library/${post.category}/${post.slug}/`}>Read More &raquo;</a></p>
+  <p><a href={postPath}>Read More &raquo;</a></p>
 </article>

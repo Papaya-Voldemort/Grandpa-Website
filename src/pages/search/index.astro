@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getPublishedPosts } from "../../lib/posts-server";
+import { getCanonicalPostPath, getPublishedPosts } from "../../lib/posts-server";
 
 export const prerender = false;
 
@@ -29,7 +29,7 @@ const results = query
     <div class="admin-list">
       {results.map((post) => (
         <article class="card">
-          <h3><a href={`/library/${post.category}/${post.slug}/`}>{post.title}</a></h3>
+          <h3><a href={getCanonicalPostPath(post)}>{post.title}</a></h3>
           <p class="meta">{post.categoryLabel}</p>
           <p>{post.excerpt}</p>
         </article>

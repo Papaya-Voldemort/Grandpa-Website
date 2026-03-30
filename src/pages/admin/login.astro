@@ -6,7 +6,7 @@ export const prerender = false;
 
 const session = await getCurrentSession(Astro.cookies);
 if (session) {
-  return Response.redirect(new URL("/admin/", Astro.url), 302);
+  return Astro.redirect("/admin/", 302);
 }
 ---
 

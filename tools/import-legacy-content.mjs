@@ -5,6 +5,7 @@ import * as cheerio from "cheerio";
 const root = path.resolve(process.cwd(), "public_html");
 const outPosts = path.resolve(process.cwd(), "src/data/legacy-content.json");
 const outPages = path.resolve(process.cwd(), "src/data/legacy-pages.json");
+const outAliases = path.resolve(process.cwd(), "src/data/legacy-aliases.json");
 
 const skipDirFragments = ["/staging/", "/scripts/", "/partials/", "/cgi-bin/"];
 const pageSlugs = new Set([
@@ -48,6 +49,93 @@ async function walk(dir) {
 
 function cleanText(value) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function segmentCount(value) {
+  return value.split("/").filter(Boolean).length;
+}
+
+function prefersCanonicalRecord(candidate, current) {
+  const candidateDepth = segmentCount(candidate.sourcePath);
+  const currentDepth = segmentCount(current.sourcePath);
+  if (candidateDepth !== currentDepth) {
+    return candidateDepth < currentDepth;
+  }
+
+  const candidateCategoryDepth = segmentCount(candidate.category);
+  const currentCategoryDepth = segmentCount(current.category);
+  if (candidateCategoryDepth !== currentCategoryDepth) {
+    return candidateCategoryDepth < currentCategoryDepth;
+  }
+
+  const candidateLegacyDepth = segmentCount(candidate.legacyUrl ?? "");
+  const currentLegacyDepth = segmentCount(current.legacyUrl ?? "");
+  if (candidateLegacyDepth !== currentLegacyDepth) {
+    return candidateLegacyDepth < currentLegacyDepth;
+  }
+
+  return candidate.title.localeCompare(current.title) < 0;
+}
+
+function isExternalUrl(value) {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|mailto:|tel:|javascript:)/i.test(value);
+}
+
+function normalizeCandidates(value, sourcePath) {
+  const candidates = new Set();
+  const trimmed = value.trim();
+  const noQuery = trimmed.split(/[?#]/, 1)[0];
+
+  candidates.add(trimmed);
+  candidates.add(noQuery);
+  candidates.add(noQuery.replace(/\/+$/, ""));
+  candidates.add(noQuery.replace(/\.html$/, "/"));
+  candidates.add(noQuery.replace(/\.html$/, ""));
+
+  if (sourcePath && !isExternalUrl(trimmed) && !trimmed.startsWith("/")) {
+    const baseDir = `/${path.posix.dirname(sourcePath)}/`;
+    const resolved = path.posix.resolve(baseDir, noQuery);
+    candidates.add(resolved);
+    candidates.add(resolved.replace(/\/+$/, ""));
+    candidates.add(resolved.replace(/\.html$/, "/"));
+    candidates.add(resolved.replace(/\.html$/, ""));
+  }
+
+  return [...candidates].filter(Boolean);
+}
+
+function rewriteLegacyLinks(html, sourcePath, aliases) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  $("[href], [src], [action]").each((_, element) => {
+    for (const attr of ["href", "src", "action"]) {
+      const value = $(element).attr(attr);
+      if (!value || isExternalUrl(value)) {
+        continue;
+      }
+
+      for (const candidate of normalizeCandidates(value, sourcePath)) {
+        const canonical = aliases.get(candidate) ?? aliases.get(candidate.replace(/\/+$/, ""));
+        if (canonical && canonical !== value) {
+          $(element).attr(attr, canonical);
+          break;
+        }
+      }
+    }
+  });
+
+  return $("body").html() ?? html;
+}
+
+function canonicalPathForRecord(record, canonicalRecord) {
+  if (!record || !canonicalRecord) {
+    return null;
+  }
+
+  if (record.slug !== canonicalRecord.slug) {
+    return null;
+  }
+
+  return canonicalRecord.category ? `/library/${canonicalRecord.category}/${canonicalRecord.slug}/` : `/${canonicalRecord.slug}/`;
 }
 
 function humanizeSlug(slug) {
@@ -242,20 +330,25 @@ function buildRecord(filePath, html) {
 
 async function main() {
   const files = await walk(root);
-  const posts = [];
+  const postsBySlug = new Map();
+  const allPostRecords = [];
   const pages = [];
 
   for (const filePath of files) {
     const html = await fs.readFile(filePath, "utf8");
-  const record = buildRecord(filePath, html);
+    const record = buildRecord(filePath, html);
 
-  if (isLegacyPost(filePath)) {
-    posts.push(record);
-    continue;
-  }
+    if (isLegacyPost(filePath)) {
+      allPostRecords.push(record);
+      const current = postsBySlug.get(record.slug);
+      if (!current || prefersCanonicalRecord(record, current)) {
+        postsBySlug.set(record.slug, record);
+      }
+      continue;
+    }
 
-  const base = path.basename(filePath, ".html");
-  if (pageSlugs.has(base)) {
+    const base = path.basename(filePath, ".html");
+    if (pageSlugs.has(base)) {
       pages.push({
         slug: base,
         title: record.title,
@@ -265,7 +358,41 @@ async function main() {
     }
   }
 
-  posts.sort((a, b) => {
+  const posts = [...postsBySlug.values()];
+  const aliases = new Map();
+
+  for (const record of allPostRecords) {
+    const canonical = postsBySlug.get(record.slug);
+    const canonicalPath = canonicalPathForRecord(record, canonical);
+    if (!canonicalPath) {
+      continue;
+    }
+
+    const legacyUrl = `/${record.sourcePath}`;
+    const variants = new Set([
+      legacyUrl,
+      legacyUrl.replace(/\/+$/, ""),
+      legacyUrl.replace(/\.html$/, "/"),
+      legacyUrl.replace(/\.html$/, ""),
+      record.legacyUrl ?? "",
+      (record.legacyUrl ?? "").replace(/\/+$/, ""),
+      (record.legacyUrl ?? "").replace(/\.html$/, "/"),
+      (record.legacyUrl ?? "").replace(/\.html$/, ""),
+    ]);
+
+    for (const variant of variants) {
+      if (variant && variant !== canonicalPath) {
+        aliases.set(variant, canonicalPath);
+      }
+    }
+  }
+
+  const normalizedPosts = posts.map((post) => ({
+    ...post,
+    contentHtml: rewriteLegacyLinks(post.contentHtml, post.sourcePath, aliases),
+  }));
+
+  normalizedPosts.sort((a, b) => {
     const aTime = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
     const bTime = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
     return bTime - aTime || a.title.localeCompare(b.title);
@@ -273,10 +400,16 @@ async function main() {
 
   pages.sort((a, b) => a.title.localeCompare(b.title));
 
-  await fs.writeFile(outPosts, `${JSON.stringify(posts, null, 2)}\n`, "utf8");
-  await fs.writeFile(outPages, `${JSON.stringify(pages, null, 2)}\n`, "utf8");
+  const normalizedPages = pages.map((page) => ({
+    ...page,
+    contentHtml: rewriteLegacyLinks(page.contentHtml, page.sourcePath, aliases),
+  }));
 
-  console.log(`Imported ${posts.length} posts and ${pages.length} standalone pages.`);
+  await fs.writeFile(outPosts, `${JSON.stringify(normalizedPosts, null, 2)}\n`, "utf8");
+  await fs.writeFile(outPages, `${JSON.stringify(normalizedPages, null, 2)}\n`, "utf8");
+  await fs.writeFile(outAliases, `${JSON.stringify(Object.fromEntries(aliases), null, 2)}\n`, "utf8");
+
+  console.log(`Imported ${normalizedPosts.length} posts and ${normalizedPages.length} standalone pages.`);
 }
 
 main().catch((error) => {

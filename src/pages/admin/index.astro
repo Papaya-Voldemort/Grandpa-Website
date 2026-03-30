@@ -1,13 +1,13 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { requireAdminSession } from "../../lib/auth";
-import { getAllIncludingArchived } from "../../lib/posts-server";
+import { getAllIncludingArchived, getCanonicalPostPath } from "../../lib/posts-server";
 
 export const prerender = false;
 
 const session = await requireAdminSession(Astro.cookies);
 if (!session) {
-  return Response.redirect(new URL("/admin/login/", Astro.url), 302);
+  return Astro.redirect("/admin/login/", 302);
 }
 
 const posts = await getAllIncludingArchived();
@@ -39,7 +39,7 @@ const posts = await getAllIncludingArchived();
             </p>
             <p>{post.excerpt}</p>
             <p>
-              <a href={`/library/${post.category}/${post.slug}/`}>View Public Page</a>
+              <a href={getCanonicalPostPath(post)}>View Public Page</a>
             </p>
           </article>
         ))}

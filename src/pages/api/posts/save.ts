@@ -3,6 +3,7 @@ import { Query } from "node-appwrite";
 import { createAdminServices } from "../../../lib/appwrite";
 import { requireAdminSession } from "../../../lib/auth";
 import { getAppwriteConfig, isAppwriteConfigured } from "../../../lib/env";
+import { normalizeLegacyHtml } from "../../../lib/content";
 import { getRowId, slugify } from "../../../lib/slug";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -21,13 +22,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const category = String(form.get("category") ?? "").trim();
   const categoryLabel = String(form.get("categoryLabel") ?? "").trim() || category;
   const excerpt = String(form.get("excerpt") ?? "").trim();
-  const contentHtml = String(form.get("contentHtml") ?? "").trim();
   const status = String(form.get("status") ?? "draft").trim();
   const coverImage = String(form.get("coverImage") ?? "").trim() || null;
   const publishedAt = String(form.get("publishedAt") ?? "").trim() || null;
   const archivedAt = String(form.get("archivedAt") ?? "").trim() || null;
   const legacySourcePath = String(form.get("legacySourcePath") ?? "").trim() || null;
   const legacyUrl = String(form.get("legacyUrl") ?? "").trim() || null;
+  const contentHtml = normalizeLegacyHtml(String(form.get("contentHtml") ?? "").trim(), legacySourcePath ?? legacyUrl ?? "");
   const sortOrder = Number.parseInt(String(form.get("sortOrder") ?? "0"), 10) || 0;
   const now = new Date().toISOString();
 

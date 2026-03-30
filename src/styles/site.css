@@ -105,6 +105,12 @@ header.site-header .search {
   padding-bottom: 1.5rem;
 }
 
+div.footer.content {
+  width: 100%;
+  float: none;
+  background-color: #e5eef5;
+}
+
 .panel {
   padding: 0;
 }

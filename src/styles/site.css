@@ -29,13 +29,13 @@ body {
 header.site-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem 1.5rem;
   margin-top: 0.5em;
   flex-wrap: wrap;
 }
 
-header.site-header .logo {
+header.site-header > .logo {
   flex: 1 1 auto;
   min-width: 240px;
 }
@@ -58,8 +58,17 @@ header.site-header .search {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  gap: 0.4rem;
   margin-left: auto;
+  max-width: 100%;
+}
+
+header.site-header .header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .admin-callout {
@@ -76,6 +85,17 @@ header.site-header .search {
   margin-bottom: 0.35rem;
 }
 
+.header-actions a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-actions .social {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
 .admin-callout:hover,
 .admin-callout:focus {
   background-color: #fdd373;
@@ -90,6 +110,18 @@ header.site-header .search {
   justify-content: flex-end;
   margin-top: 0.35rem;
   width: 100%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .site-search-form input[type="search"] {
@@ -349,10 +381,27 @@ div.footer.content {
     padding: 16px 18px;
   }
 
+  header.site-header {
+    align-items: center;
+  }
+
+  header.site-header > .logo {
+    min-width: 0;
+  }
+
   header.site-header .search {
     flex: 1 1 auto;
     width: 100%;
-    text-align: left;
+    text-align: center;
     align-items: flex-start;
+  }
+
+  header.site-header .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .site-search-form {
+    justify-content: center;
   }
 }

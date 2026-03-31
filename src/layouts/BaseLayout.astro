@@ -30,15 +30,18 @@ const {
           </h1>
         </div>
         <div class="search">
-          <a href="https://twitter.com/stephenmbird" target="_blank" rel="noreferrer noopener">
-            <img src="/images/twitter-link-header.jpg" class="social" alt="Twitter" />
-          </a>
-          <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener">
-            <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
-          </a>
-          <a class="admin-callout" href="/post-maker/">POST MAKER</a>
+          <div class="header-actions">
+            <a href="https://twitter.com/stephenmbird" target="_blank" rel="noreferrer noopener">
+              <img src="/images/twitter-link-header.jpg" class="social" alt="Twitter" />
+            </a>
+            <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener">
+              <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
+            </a>
+            <a class="admin-callout" href="/post-maker/">POST MAKER</a>
+          </div>
           <form class="site-search-form" action="/search/" method="get">
-            <input type="search" name="q" placeholder="Search this site" />
+            <label class="sr-only" for="site-search">Search this site</label>
+            <input id="site-search" type="search" name="q" placeholder="Search this site" />
             <button type="submit">Search</button>
           </form>
         </div>

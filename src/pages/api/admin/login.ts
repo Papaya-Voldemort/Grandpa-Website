@@ -3,31 +3,50 @@ import { Account } from "node-appwrite";
 import { createServerClient, getCookieName } from "../../../lib/appwrite";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const form = await request.formData();
-  const email = String(form.get("email") ?? "").trim();
-  const password = String(form.get("password") ?? "");
-
-  if (!email || !password) {
-    return new Response("Missing email or password.", { status: 400 });
-  }
-
   try {
-    const client = createServerClient(false);
-    const account = new Account(client);
-    const session = await account.createEmailPasswordSession(email, password);
+    const form = await request.formData();
+    const email = String(form.get("email") ?? "").trim();
+    const password = String(form.get("password") ?? "");
 
-    cookies.set(getCookieName(), session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      expires: new Date(session.expire),
-    });
+    if (!email || !password) {
+      return new Response("Missing email or password.", { status: 400 });
+    }
 
-    return Response.redirect(new URL("/admin/", request.url), 303);
+    try {
+      const client = createServerClient(false);
+      const account = new Account(client);
+      const session = await account.createEmailPasswordSession(email, password);
+
+      cookies.set(getCookieName(), session.secret, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+        expires: new Date(session.expire),
+      });
+
+      return Response.redirect(new URL("/admin/", request.url), 303);
+    } catch (appwriteError: any) {
+      console.error("Appwrite error:", appwriteError);
+      
+      // Handle Appwrite-specific errors
+      if (appwriteError?.message?.includes("Invalid credentials") || appwriteError?.message?.includes("Invalid email")) {
+        return new Response("Invalid email or password.", { status: 401 });
+      }
+      
+      if (appwriteError?.message?.includes("not configured")) {
+        return new Response("Server configuration error. Please contact administrator.", { status: 503 });
+      }
+      
+      if (appwriteError?.code === 401 || appwriteError?.status === 401) {
+        return new Response("Invalid email or password.", { status: 401 });
+      }
+      
+      // Default to 401 for authentication failures
+      return new Response(appwriteError?.message || "Unable to sign in.", { status: 401 });
+    }
   } catch (error: any) {
-    console.error("Login error:", error);
-    const message = error?.message || "Unable to sign in.";
-    return new Response(message, { status: 401 });
+    console.error("Unexpected login error:", error);
+    return new Response("Internal server error. Please try again later.", { status: 500 });
   }
 };

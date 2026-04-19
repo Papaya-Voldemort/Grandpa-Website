@@ -4,14 +4,18 @@ import { getAppwriteConfig, getSessionCookieName } from "./env";
 export function createServerClient(withKey = false) {
   const { endpoint, projectId, apiKey } = getAppwriteConfig();
   if (!endpoint || !projectId) {
-    throw new Error("Appwrite endpoint/project ID are not configured.");
+    const error = new Error("Appwrite endpoint/project ID are not configured.");
+    (error as any).statusCode = 503; // Service Unavailable
+    throw error;
   }
 
   const client = new Client().setEndpoint(endpoint).setProject(projectId);
 
   if (withKey) {
     if (!apiKey) {
-      throw new Error("APPWRITE_KEY is not configured.");
+      const error = new Error("APPWRITE_KEY is not configured.");
+      (error as any).statusCode = 503; // Service Unavailable
+      throw error;
     }
     client.setKey(apiKey);
   }

@@ -44,10 +44,12 @@ export default function RichTextEditor({ initialContent, onChange }: Props) {
   const [value, setValue] = useState(initialContent);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const genericFileInputRef = useRef<HTMLInputElement>(null);
+
   const extensions = useMemo(
     () => [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3, 4] },
+        heading: { levels: [1, 2, 3, 4, 5] },
       }),
       Underline,
       Link.configure({
@@ -107,7 +109,7 @@ export default function RichTextEditor({ initialContent, onChange }: Props) {
     }
   }, [editor, mode, value]);
 
-  async function uploadImage(file: File) {
+  async function uploadFile(file: File) {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -128,7 +130,7 @@ export default function RichTextEditor({ initialContent, onChange }: Props) {
     return payload.url;
   }
 
-  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || !editor) {
@@ -136,10 +138,30 @@ export default function RichTextEditor({ initialContent, onChange }: Props) {
     }
 
     try {
-      const url = await uploadImage(file);
+      const url = await uploadFile(file);
       editor.chain().focus().setImage({ src: url, alt: file.name }).run();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Image upload failed.");
+    }
+  }
+
+  async function handleGenericFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !editor) {
+      return;
+    }
+
+    try {
+      const url = await uploadFile(file);
+      const fileName = file.name;
+      editor
+        .chain()
+        .focus()
+        .insertContent(`<a href="${url}" target="_blank" rel="noreferrer noopener">${fileName}</a>`)
+        .run();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "File upload failed.");
     }
   }
 
@@ -164,74 +186,115 @@ export default function RichTextEditor({ initialContent, onChange }: Props) {
       {mode === "visual" ? (
         <>
           <div className="editor-toolbar">
-            <ToolbarButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
-              Bold
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
-              Italic
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}>
-              Underline
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
-              H1
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-              H2
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
-              H3
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-              Bullets
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-              Numbered
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
-              Quote
-            </ToolbarButton>
-            <ToolbarButton active={editor.isActive("codeBlock")} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
-              Code
-            </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()}>Rule</ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()}>Left</ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()}>Center</ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("right").run()}>Right</ToolbarButton>
-            <ToolbarButton
-              onClick={() => {
-                const url = window.prompt("Paste image URL");
-                if (url) {
-                  editor.chain().focus().setImage({ src: url }).run();
-                }
-              }}
-            >
-              Image URL
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => {
-                fileInputRef.current?.click();
-              }}
-            >
-              Upload Image
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => {
-                const url = window.prompt("Paste link URL");
-                if (url) {
-                  editor.chain().focus().setLink({ href: url }).run();
-                }
-              }}
-            >
-              Link
-            </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().unsetLink().run()}>Unlink</ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
-              Table
-            </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()}>Col+</ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()}>Row+</ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()}>Delete Table</ToolbarButton>
+            <div className="toolbar-group">
+              <ToolbarButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
+                <strong>B</strong>
+              </ToolbarButton>
+              <ToolbarButton active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
+                <em>I</em>
+              </ToolbarButton>
+              <ToolbarButton active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+                <u>U</u>
+              </ToolbarButton>
+              <ToolbarButton active={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()}>
+                <s>S</s>
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+                H1
+              </ToolbarButton>
+              <ToolbarButton active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+                H2
+              </ToolbarButton>
+              <ToolbarButton active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+                H3
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+                • List
+              </ToolbarButton>
+              <ToolbarButton active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+                1. List
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+                Left
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()}>
+                Center
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("right").run()}>
+                Right
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton
+                onClick={() => {
+                  const url = window.prompt("Paste link URL");
+                  if (url) {
+                    editor.chain().focus().setLink({ href: url }).run();
+                  }
+                }}
+                active={editor.isActive("link")}
+              >
+                🔗 Link
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().unsetLink().run()} disabled={!editor.isActive("link")}>
+                ❌ Link
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().run()}>
+                🧹 Clear
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton
+                onClick={() => {
+                  fileInputRef.current?.click();
+                }}
+              >
+                🖼️ Image
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={() => {
+                  genericFileInputRef.current?.click();
+                }}
+              >
+                📁 File
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")}>
+                " Quote
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")}>
+                Code
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+                Line
+              </ToolbarButton>
+            </div>
+
+            <div className="toolbar-group">
+              <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+                Table
+              </ToolbarButton>
+              {editor.isActive("table") && (
+                <>
+                  <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()}>Col+</ToolbarButton>
+                  <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()}>Row+</ToolbarButton>
+                  <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()}>Del Table</ToolbarButton>
+                </>
+              )}
+            </div>
           </div>
 
           <EditorContent editor={editor} />
@@ -257,11 +320,18 @@ export default function RichTextEditor({ initialContent, onChange }: Props) {
 
       <input
         ref={fileInputRef}
-        className="hidden"
+        style={{ display: "none" }}
         type="file"
         accept="image/*"
-        onChange={handleFileSelect}
+        onChange={handleImageSelect}
         aria-label="Upload image"
+      />
+      <input
+        ref={genericFileInputRef}
+        style={{ display: "none" }}
+        type="file"
+        onChange={handleGenericFileSelect}
+        aria-label="Upload file"
       />
       <input type="hidden" name="contentHtml" value={value} readOnly />
     </div>

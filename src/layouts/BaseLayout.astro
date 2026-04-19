@@ -1,5 +1,6 @@
 ---
 import "../styles/site.css";
+import { getCurrentSession } from "../lib/auth";
 
 const {
   title = "Stephen M. Bird",
@@ -8,6 +9,8 @@ const {
   showSidebar = true,
   containerId = "content-page",
 } = Astro.props;
+
+const session = await getCurrentSession(Astro.cookies);
 ---
 
 <!DOCTYPE html>
@@ -22,29 +25,34 @@ const {
   <body class={pageClass}>
     <div id={containerId}>
       <header class="site-header">
-        <div class="logo">
-          <h1 class="logo">
-            <a href="/">
-              <img src="/logo.png" alt="Stephen M. Bird" />
-            </a>
-          </h1>
+        <div class="logo-area">
+          <a href="/" class="logo-link">
+            <img src="/logo.png" alt="Stephen M. Bird" />
+          </a>
         </div>
-        <div class="search">
-          <a href="https://twitter.com/stephenmbird" target="_blank" rel="noreferrer noopener">
-            <img src="/images/twitter-link-header.jpg" class="social" alt="Twitter" />
-          </a>
-          <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener">
-            <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
-          </a>
-          <a class="admin-callout" href="/post-maker/">POST MAKER</a>
+        <div class="header-right">
+          <div class="header-actions">
+            <a href="https://twitter.com/stephenmbird" target="_blank" rel="noreferrer noopener">
+              <img src="/images/twitter-link-header.jpg" class="social" alt="Twitter" />
+            </a>
+            <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener">
+              <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
+            </a>
+            {session ? (
+              <a class="admin-callout" href="/admin/">ADMIN</a>
+            ) : (
+              <a class="admin-callout" href="/admin/login/">LOGIN</a>
+            )}
+          </div>
           <form class="site-search-form" action="/search/" method="get">
-            <input type="search" name="q" placeholder="Search this site" />
+            <label class="sr-only" for="site-search">Search this site</label>
+            <input id="site-search" type="search" name="q" placeholder="Search this site" />
             <button type="submit">Search</button>
           </form>
         </div>
       </header>
 
-      <div class="navigation top">
+      <nav class="navigation top" aria-label="Main Navigation">
         <ul>
           <li><a href="/">HOME</a></li>
           <li><a href="/library/inspirational-stories/">INSPIRATIONAL STORIES</a></li>
@@ -55,14 +63,14 @@ const {
           <li><a href="/library/reading/">READING</a></li>
           <li><a href="/library/my-book/">MY BOOK</a></li>
         </ul>
-      </div>
+      </nav>
 
       <main class={`page-body ${showSidebar ? "" : "panel"} ${pageClass}`.trim()}>
         <slot />
       </main>
 
-      <div class="footer">
-        <div class="navigation bottom">
+      <footer class="footer">
+        <nav class="navigation bottom" aria-label="Footer Navigation">
           <ul>
             <li><a href="/">HOME</a></li>
             <li><a href="/library/inspirational-stories/">INSPIRATIONAL STORIES</a></li>
@@ -74,7 +82,7 @@ const {
             <li><a href="/library/my-book/">MY BOOK</a></li>
             <li><a href="/library/archives/">BROWSE ARCHIVES</a></li>
           </ul>
-        </div>
+        </nav>
 
         <div class="footer content">
           <div class="aboutPtbm">
@@ -108,7 +116,7 @@ const {
 
         <div class="copyrightFooter">
           <p>
-            Copyright &copy; 2011 Stephen M. Bird. All rights reserved. Designed and Developed by Stephen Bird, Jarren Bird, Stephanie Bird and Colton Chesnut
+            Copyright &copy; 2011 - {new Date().getFullYear()} Stephen M. Bird. All rights reserved. Designed and Developed by Stephen Bird, Jarren Bird, Stephanie Bird and Colton Chesnut
           </p>
         </div>
       </div>

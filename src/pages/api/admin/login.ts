@@ -25,8 +25,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
     return Response.redirect(new URL("/admin/", request.url), 303);
-  } catch (error) {
-    console.error(error);
-    return new Response("Unable to sign in.", { status: 401 });
+  } catch (error: any) {
+    console.error("Login error:", error);
+    const message = error?.message || "Unable to sign in.";
+    return new Response(message, { status: 401 });
   }
 };

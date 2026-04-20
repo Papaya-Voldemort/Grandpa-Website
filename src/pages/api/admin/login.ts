@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { Account } from "node-appwrite";
 import { createServerClient, getCookieName } from "../../../lib/appwrite";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   try {
     const form = await request.formData();
     const email = String(form.get("email") ?? "").trim();
@@ -17,18 +17,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const account = new Account(client);
       const session = await account.createEmailPasswordSession(email, password);
 
-      // Build Set-Cookie header value manually to avoid immutable headers issue
-      const cookieName = getCookieName();
-      const expires = new Date(session.expire).toUTCString();
-      const cookieValue = `${cookieName}=${session.secret}; Path=/; HttpOnly; SameSite=Lax; Secure; Expires=${expires}`;
+      // Use Astro's cookies API properly within the try block
+      cookies.set(getCookieName(), session.secret, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+        expires: new Date(session.expire),
+      });
 
-      // Return redirect with Set-Cookie header instead of using cookies API
-      const redirectUrl = new URL("/admin/", request.url).toString();
-      return new Response(null, {
-        status: 303,
+      // Return JSON response instead of redirect - let client handle navigation
+      return new Response(JSON.stringify({ success: true, redirectUrl: "/admin/" }), {
+        status: 200,
         headers: {
-          "Location": redirectUrl,
-          "Set-Cookie": cookieValue,
+          "Content-Type": "application/json",
         },
       });
     } catch (appwriteError: any) {

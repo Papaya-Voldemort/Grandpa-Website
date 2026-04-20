@@ -23,7 +23,7 @@ const posts = await getAllIncludingArchived();
     <div class="admin-grid">
       <div class="card">
         <p><a class="action-button" href="/admin/posts/new/">Write a New Post</a></p>
-        <form method="post" action="/api/admin/logout">
+        <form id="logoutForm" method="post">
           <button type="submit">Sign Out</button>
         </form>
       </div>
@@ -47,3 +47,24 @@ const posts = await getAllIncludingArchived();
     </div>
   </div>
 </BaseLayout>
+
+<script>
+  const logoutForm = document.getElementById('logoutForm');
+  logoutForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/admin/logout', {
+        method: 'POST',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.redirectUrl;
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  });
+</script>
+

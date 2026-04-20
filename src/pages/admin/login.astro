@@ -16,7 +16,7 @@ if (session) {
     <p>Sign in with your Appwrite email and password to manage posts, archive old stories, and publish new ones.</p>
     <p>If admin allow-list env vars are set, only those approved Appwrite accounts can enter.</p>
 
-    <form class="card auth-card" method="post" action="/api/admin/login">
+    <form class="card auth-card" id="loginForm">
       <div class="form-grid">
         <label>
           Email
@@ -28,6 +28,40 @@ if (session) {
         </label>
         <button type="submit">Sign In</button>
       </div>
+      <div id="error-message" style="display: none; color: red; margin-top: 1rem;"></div>
     </form>
   </div>
 </BaseLayout>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const errorDiv = document.getElementById('error-message');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    try {
+      const formData = new FormData(form);
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.redirectUrl;
+      } else {
+        const errorMessage = await response.text();
+        errorDiv.textContent = errorMessage || 'Login failed. Please try again.';
+        errorDiv.style.display = 'block';
+      }
+    } catch (error) {
+      errorDiv.textContent = 'An error occurred. Please try again.';
+      errorDiv.style.display = 'block';
+      console.error('Login error:', error);
+    }
+  });
+</script>
+

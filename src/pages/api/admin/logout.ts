@@ -1,17 +1,15 @@
 import type { APIRoute } from "astro";
 import { getCookieName } from "../../../lib/appwrite";
 
-export const POST: APIRoute = async ({ request }) => {
-  // Delete cookie by setting it with an expired date
-  const cookieName = getCookieName();
-  const cookieValue = `${cookieName}=; Path=/; HttpOnly; SameSite=Lax; Secure; Expires=Thu, 01 Jan 1970 00:00:00 UTC`;
+export const POST: APIRoute = async ({ cookies }) => {
+  // Delete the session cookie
+  cookies.delete(getCookieName(), { path: "/" });
   
-  const redirectUrl = new URL("/admin/login/", request.url).toString();
-  return new Response(null, {
-    status: 303,
+  // Return JSON response with redirect URL
+  return new Response(JSON.stringify({ success: true, redirectUrl: "/admin/login/" }), {
+    status: 200,
     headers: {
-      "Location": redirectUrl,
-      "Set-Cookie": cookieValue,
+      "Content-Type": "application/json",
     },
   });
 };

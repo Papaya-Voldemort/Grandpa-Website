@@ -4,7 +4,10 @@ import { getAppwriteConfig } from "./env";
 import type { AdminSession } from "./types";
 
 export async function getCurrentSession(cookies: AstroCookies): Promise<AdminSession | null> {
-  const session = cookies.get(getCookieName())?.value;
+  const cookieName = getCookieName();
+  const session = cookies.get(cookieName)?.value;
+  console.log(`[auth] Check session cookie: ${cookieName} -> ${session ? "present" : "missing"}`);
+  
   if (!session) {
     return null;
   }
@@ -12,12 +15,14 @@ export async function getCurrentSession(cookies: AstroCookies): Promise<AdminSes
   try {
     const { account } = createSessionClient(session);
     const user = await account.get();
+    console.log(`[auth] Session valid for user: ${user.$id} (${user.email})`);
     return {
       userId: user.$id,
       email: user.email ?? null,
       name: user.name ?? null,
     };
-  } catch {
+  } catch (error) {
+    console.error(`[auth] Failed to verify session with Appwrite:`, error);
     return null;
   }
 }

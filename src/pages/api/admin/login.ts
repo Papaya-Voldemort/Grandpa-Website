@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { Account } from "node-appwrite";
 import { createServerClient, getCookieName } from "../../../lib/appwrite";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
     const form = await request.formData();
     const email = String(form.get("email") ?? "").trim();
@@ -17,17 +17,23 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       const account = new Account(client);
       const session = await account.createEmailPasswordSession(email, password);
 
-      // Set the cookie using Astro's cookies API
-      cookies.set(getCookieName(), session.secret, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: true,
-        expires: new Date(session.expire),
-      });
+      // Build Set-Cookie header value manually
+      const cookieName = getCookieName();
+      console.log(`[login] Successfully authenticated, setting cookie: ${cookieName}`);
+      const expires = new Date(session.expire).toUTCString();
+      const cookieValue = `${cookieName}=${session.secret}; Path=/; HttpOnly; SameSite=Lax; Secure; Expires=${expires}`;
 
-      // Use Astro's redirect which properly handles cookies
-      return redirect("/admin/", 303);
+      // Construct a mutable response so the Astro cookie injector doesn't crash,
+      // and manually append the cookie so it's guaranteed to be sent.
+      const redirectUrl = new URL("/admin/", request.url).toString();
+      const response = new Response(null, {
+        status: 302, // Use 302 instead of 303 to avoid browser caching issues with redirects
+        headers: {
+          "Location": redirectUrl,
+          "Set-Cookie": cookieValue,
+        },
+      });
+      return response;
     } catch (appwriteError: any) {
       console.error("Appwrite error:", appwriteError);
       

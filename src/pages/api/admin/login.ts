@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       const account = new Account(client);
       const session = await account.createEmailPasswordSession(email, password);
 
-      // Use Astro's cookies API properly within the try block
+      // Set the cookie using Astro's cookies API
       cookies.set(getCookieName(), session.secret, {
         path: "/",
         httpOnly: true,
@@ -26,13 +26,8 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
         expires: new Date(session.expire),
       });
 
-      // Return JSON response instead of redirect - let client handle navigation
-      return new Response(JSON.stringify({ success: true, redirectUrl: "/admin/" }), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Use Astro's redirect which properly handles cookies
+      return redirect("/admin/", 303);
     } catch (appwriteError: any) {
       console.error("Appwrite error:", appwriteError);
       

@@ -17,15 +17,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const account = new Account(client);
       const session = await account.createEmailPasswordSession(email, password);
 
-      cookies.set(getCookieName(), session.secret, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: true,
-        expires: new Date(session.expire),
-      });
+      // Build Set-Cookie header value manually to avoid immutable headers issue
+      const cookieName = getCookieName();
+      const expires = new Date(session.expire).toUTCString();
+      const cookieValue = `${cookieName}=${session.secret}; Path=/; HttpOnly; SameSite=Lax; Secure; Expires=${expires}`;
 
-      return Response.redirect(new URL("/admin/", request.url), 303);
+      // Return redirect with Set-Cookie header instead of using cookies API
+      const redirectUrl = new URL("/admin/", request.url).toString();
+      return new Response(null, {
+        status: 303,
+        headers: {
+          "Location": redirectUrl,
+          "Set-Cookie": cookieValue,
+        },
+      });
     } catch (appwriteError: any) {
       console.error("Appwrite error:", appwriteError);
       

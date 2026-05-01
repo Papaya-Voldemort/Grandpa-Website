@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PostCard from "../../../components/PostCard.astro";
+import { getAllIncludingArchived } from "../../../lib/posts-server";
+
+export const prerender = false;
+
+const posts = await getAllIncludingArchived();
+const visible = posts.filter((post) => post.status !== "archived");
+---
+
+<BaseLayout title="Archives | Stephen M. Bird" description="Browse the article archive.">
+  <div class="panel">
+    <h1>Archives</h1>
+    <p>Browse the full collection of articles, grouped in the same familiar categories.</p>
+
+    <section class="post-grid">
+      {visible.map((post) => <PostCard post={post} />)}
+    </section>
+  </div>
+</BaseLayout>

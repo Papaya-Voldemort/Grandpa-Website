@@ -1,12 +1,19 @@
 ---
 import type { PostRecord, LegacyPost } from "../lib/types";
 import { getCanonicalPostPath } from "../lib/posts-server";
+import { getCurrentSession } from "../lib/auth";
 
-const { post } = Astro.props as { post: PostRecord | LegacyPost & { $id?: string } };
+const { post } = Astro.props as { post: PostRecord & { $id?: string } | LegacyPost & { $id?: string } };
 const postPath = getCanonicalPostPath(post);
+const session = await getCurrentSession(Astro.cookies);
 ---
 
-<article class="card article-teaser">
+<article class="card article-teaser" style="position: relative;">
+  {session && post.$id && (
+    <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+      <a href={`/admin/posts/${post.$id}`} class="admin-callout" style="text-decoration: none;">EDIT POST</a>
+    </div>
+  )}
   {post.coverImage ? <img src={post.coverImage} alt={post.title} /> : null}
   <h2><a href={postPath}>{post.title}</a></h2>
   <p class="meta">

@@ -1,0 +1,27 @@
+import { c as createComponent } from './astro-component_BhUZwqY9.mjs';
+import 'piccolore';
+import { h as addAttribute, o as renderHead, r as renderTemplate, p as renderSlot } from './entrypoint_BjHBL06r.mjs';
+import 'clsx';
+import { g as getCurrentSession } from './auth_EJspuftz.mjs';
+
+const $$BaseLayout = createComponent(async ($$result, $$props, $$slots) => {
+  const Astro2 = $$result.createAstro($$props, $$slots);
+  Astro2.self = $$BaseLayout;
+  const {
+    title = "Stephen M. Bird",
+    description = "Stephen M. Bird | Prayers | Miracles | Family | Marriage | Happiness",
+    pageClass = "",
+    showSidebar = true,
+    containerId = "content-page"
+  } = Astro2.props;
+  const session = await getCurrentSession(Astro2.cookies);
+  return renderTemplate`<html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><meta name="description"${addAttribute(description, "content")}><meta name="robots" content="index, follow">${renderHead()}</head> <body${addAttribute(pageClass, "class")}> <div${addAttribute(containerId, "id")}> <header class="site-header"> <div class="logo-area"> <a href="/" class="logo-link"> <img src="/logo.png" alt="Stephen M. Bird"> </a> </div> <div class="header-right"> <div class="header-actions"> <a href="https://twitter.com/stephenmbird" target="_blank" rel="noreferrer noopener"> <img src="/images/twitter-link-header.jpg" class="social" alt="Twitter"> </a> <a href="https://facebook.com/prayersthatbringmiracles" target="_blank" rel="noreferrer noopener"> <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook"> </a> ${session ? renderTemplate`<div style="display: flex; gap: 0.5rem; align-items: center;"> <a class="admin-callout" href="/admin/">ADMIN</a> <form action="/api/admin/logout" method="post" style="margin: 0;"> <button type="submit" class="admin-callout admin-logout" style="cursor: pointer; padding: 0.4em 0.8em; border: 1px solid #d32f2f; background-color: #ffebee; color: #b71c1c;">SIGN OUT</button> </form> </div>` : renderTemplate`<a class="admin-callout" href="/admin/login/">LOGIN</a>`} </div> <form class="site-search-form" action="/search/" method="get"> <label class="sr-only" for="site-search">Search this site</label> <input id="site-search" type="search" name="q" placeholder="Search this site"> <button type="submit">Search</button> </form> </div> </header> <nav class="navigation top" aria-label="Main Navigation"> <ul> <li><a href="/">HOME</a></li> <li><a href="/library/inspirational-stories/">INSPIRATIONAL STORIES</a></li> <li><a href="/library/marriage-family/">MARRIAGE &amp; FAMILY</a></li> <li><a href="/library/gospel-doctrine/">GOSPEL DOCTRINE</a></li> <li><a href="/library/financial-ark/">FINANCIAL ARK</a></li> <li><a href="/library/religion-society/">RELIGION &amp; SOCIETY</a></li> <li><a href="/library/reading/">READING</a></li> <li><a href="/library/my-book/">MY BOOK</a></li> </ul> </nav> <main${addAttribute(`page-body ${showSidebar ? "" : "panel"} ${pageClass}`.trim(), "class")}> ${renderSlot($$result, $$slots["default"])} </main> <footer class="footer"> <nav class="navigation bottom" aria-label="Footer Navigation"> <ul> <li><a href="/">HOME</a></li> <li><a href="/library/inspirational-stories/">INSPIRATIONAL STORIES</a></li> <li><a href="/library/gospel-doctrine/">GOSPEL DOCTRINE</a></li> <li><a href="/library/marriage-family/">MARRIAGE &amp; FAMILY</a></li> <li><a href="/library/financial-ark/">FINANCIAL ARK</a></li> <li><a href="/library/religion-society/">RELIGION &amp; SOCIETY</a></li> <li><a href="/library/reading/">READING</a></li> <li><a href="/library/my-book/">MY BOOK</a></li> <li><a href="/library/archives/">BROWSE ARCHIVES</a></li> </ul> </nav> <div class="footer content"> <div class="aboutPtbm"> <img src="/images/Prayers130w.jpg" alt="Prayers That Bring Miracles book cover"> <h4>PRAYERS THAT BRING MIRACLES</h4> <p>
+In the spring of 1983, I finished my Master's degree in counseling at BYU and was accepted into the Navy as an LDS Chaplain.
+</p> <a href="/prayers-that-bring-miracles/">Read More &raquo;</a> </div> <div class="aboutMe"> <img src="/images/stephenmbirdphoto199h.jpg" alt="Stephen M. Bird"> <h4>ABOUT ME</h4> <p>
+I was born and raised in Ogden, Utah. I graduated from Bonneville High School in June of 1967 and attended Weber State College.
+</p> <a href="/about-me/">Read More &raquo;</a> </div> <div class="moreInfo"> <h5>MORE INFORMATION</h5> <ul> <li><a class="topicalArchive" href="/library/archives/">BROWSE ARTICLES</a></li> <li><a class="aboutWebsite" href="/about-this-website/">ABOUT THIS WEBSITE</a></li> <li><a class="sendEmail" href="/contact/">SEND ME AN EMAIL</a></li> <li><a class="buyBook" href="/library/my-book/how-to-obtain-a-copy/">BUY MY BOOK</a></li> </ul> </div> </div> <div class="copyrightFooter"> <p>
+Copyright &copy; 2011 - ${(/* @__PURE__ */ new Date()).getFullYear()} Stephen M. Bird. All rights reserved. Designed and Developed by Stephen Bird, Jarren Bird, Stephanie Bird and Colton Chesnut
+</p> </div> </footer></div> </body></html>`;
+}, "/workspaces/Grandpa-Website/src/layouts/BaseLayout.astro", void 0);
+
+export { $$BaseLayout as $ };

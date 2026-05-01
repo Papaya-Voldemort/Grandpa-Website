@@ -1,0 +1,70 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCanonicalPostPath, getLatestPosts } from "../lib/posts-server";
+
+const latestPosts = await getLatestPosts(4);
+const hero = latestPosts[0];
+const left = latestPosts[1];
+const middle = latestPosts[2];
+const right = latestPosts[3];
+---
+
+<BaseLayout title="Stephen M. Bird | Prayers | Miracles | Family | Marriage | Happiness" containerId="home-page">
+  <section class="article top">
+    <div class="topImage">
+      <img src={hero?.coverImage ?? "/images/cornucopia.jpg"} alt={hero?.title ?? "Every Day Is Thanksgiving"} />
+    </div>
+    <div class="topContent">
+      <h1>{hero?.title ?? "Every Day Is Thanksgiving"}</h1>
+      <h3>
+        {hero?.categoryLabel ?? "Featured Story"}
+        {hero?.publishedAt ? ` · ${new Date(hero.publishedAt).toLocaleDateString("en-US")}` : ""}
+      </h3>
+      <p>{hero?.excerpt ?? "Faith, gratitude, family, and miracles in everyday life."}</p>
+      {hero ? (
+        <p><a href={getCanonicalPostPath(hero)}>Read More &raquo;</a></p>
+      ) : null}
+    </div>
+  </section>
+
+  <div class="clear"></div>
+
+  <section class="article left">
+    {left ? (
+      <>
+        <h2><a href={getCanonicalPostPath(left)}>{left.title}</a></h2>
+        <h3>{left.categoryLabel}{left.publishedAt ? ` · ${new Date(left.publishedAt).toLocaleDateString("en-US")}` : ""}</h3>
+        <p>{left.excerpt}</p>
+        <p><a href={getCanonicalPostPath(left)}>Read More &raquo;</a></p>
+      </>
+    ) : null}
+  </section>
+
+  <section class="article middle">
+    {middle ? (
+      <>
+        <h2><a href={getCanonicalPostPath(middle)}>{middle.title}</a></h2>
+        <h3>{middle.categoryLabel}{middle.publishedAt ? ` · ${new Date(middle.publishedAt).toLocaleDateString("en-US")}` : ""}</h3>
+        <p>{middle.excerpt}</p>
+        <p><a href={getCanonicalPostPath(middle)}>Read More &raquo;</a></p>
+      </>
+    ) : null}
+  </section>
+
+  <section class="article right">
+    {right ? (
+      <>
+        <h2><a href={getCanonicalPostPath(right)}>{right.title}</a></h2>
+        <h3>{right.categoryLabel}{right.publishedAt ? ` · ${new Date(right.publishedAt).toLocaleDateString("en-US")}` : ""}</h3>
+        <p>{right.excerpt}</p>
+        <p><a href={getCanonicalPostPath(right)}>Read More &raquo;</a></p>
+      </>
+    ) : null}
+  </section>
+
+  <div class="clear"></div>
+
+  <div class="browseButton">
+    <a href="/library/archives/" class="browseMore">Browse More Articles &raquo;</a>
+  </div>
+</BaseLayout>

@@ -1,0 +1,31 @@
+---
+export const prerender = false;
+
+const raw = Astro.params.legacy ?? "";
+const pathname = Array.isArray(raw) ? raw.join("/") : raw;
+
+function redirectTarget(input: string) {
+  const clean = input.replace(/^\/+/, "");
+  if (!clean.endsWith(".html")) {
+    return null;
+  }
+
+  const withoutExt = clean.slice(0, -5);
+  if (withoutExt === "index") {
+    return "/";
+  }
+
+  if (withoutExt.endsWith("/index")) {
+    return `/${withoutExt.slice(0, -6)}/`;
+  }
+
+  return `/${withoutExt}/`;
+}
+
+const target = redirectTarget(pathname);
+if (!target) {
+  return new Response("Not found", { status: 404 });
+}
+
+return Astro.redirect(target, 301);
+---

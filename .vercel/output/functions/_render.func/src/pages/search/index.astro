@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCanonicalPostPath, getPublishedPosts } from "../../lib/posts-server";
+
+export const prerender = false;
+
+const query = (Astro.url.searchParams.get("q") ?? "").trim().toLowerCase();
+const posts = await getPublishedPosts();
+const results = query
+  ? posts.filter((post) => {
+      const haystack = [post.title, post.excerpt, post.categoryLabel, post.contentHtml]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    })
+  : [];
+---
+
+<BaseLayout title="Search | Stephen M. Bird" description="Search the site archive.">
+  <div class="panel">
+    <h1>Search This Site</h1>
+    <form class="site-search-form" action="/search/" method="get">
+      <input type="search" name="q" value={query} placeholder="Search by title, phrase, or category" />
+      <button type="submit">Search</button>
+    </form>
+
+    {query ? <p>{results.length} result(s) for <strong>{query}</strong>.</p> : <p>Search the archive by title or topic.</p>}
+
+    <div class="admin-list">
+      {results.map((post) => (
+        <article class="card">
+          <h3><a href={getCanonicalPostPath(post)}>{post.title}</a></h3>
+          <p class="meta">{post.categoryLabel}</p>
+          <p>{post.excerpt}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

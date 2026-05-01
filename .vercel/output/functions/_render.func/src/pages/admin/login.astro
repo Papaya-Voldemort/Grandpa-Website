@@ -1,0 +1,53 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCurrentSession, isAdminAllowed } from "../../lib/auth";
+
+export const prerender = false;
+
+const session = await getCurrentSession(Astro.cookies);
+const error = Astro.url.searchParams.get("error") ?? "";
+const isAllowed = session ? isAdminAllowed(session) : false;
+
+if (session && isAllowed) {
+  return Astro.redirect("/admin/", 302);
+}
+
+const errorMessage =
+  (session && !isAllowed)
+    ? "Your session is not authorized for admin access."
+    : error === "invalid_credentials"
+      ? "Invalid email or password."
+      : error === "auth_not_configured"
+        ? "Admin auth is not configured. Set ADMIN_AUTH_EMAIL, ADMIN_AUTH_PASSWORD, and ADMIN_AUTH_SESSION_SECRET in production env vars."
+        : error === "missing_credentials"
+          ? "Please enter both email and password."
+          : error === "server_error"
+            ? "Sign in failed due to a server-side error."
+    : null;
+---
+
+<BaseLayout title="Post Maker Login | Stephen M. Bird" pageClass="admin-login" showSidebar={false}>
+  <div class="panel">
+    <h1>Post Maker Login</h1>
+    <p>Sign in with the admin email and password configured in environment variables.</p>
+    <p>This login does not use Appwrite authentication.</p>
+
+    {errorMessage ? <p class="admin-notice">{errorMessage}</p> : null}
+
+    <form class="card auth-card" method="post" action="/api/admin/login">
+      <div class="form-grid">
+        <label>
+          Email
+          <input type="email" name="email" required />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" required />
+        </label>
+        <button type="submit">Sign In</button>
+      </div>
+    </form>
+  </div>
+</BaseLayout>
+
+

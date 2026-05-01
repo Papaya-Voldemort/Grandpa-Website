@@ -39,7 +39,12 @@ const session = await getCurrentSession(Astro.cookies);
               <img src="/images/facebook-link-header.jpg" class="social" alt="Facebook" />
             </a>
             {session ? (
-              <a class="admin-callout" href="/admin/">ADMIN</a>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <a class="admin-callout" href="/admin/">ADMIN</a>
+                <form action="/api/admin/logout" method="post" style="margin: 0;">
+                  <button type="submit" class="admin-callout admin-logout" style="cursor: pointer; padding: 0.4em 0.8em; border: 1px solid #d32f2f; background-color: #ffebee; color: #b71c1c;">SIGN OUT</button>
+                </form>
+              </div>
             ) : (
               <a class="admin-callout" href="/admin/login/">LOGIN</a>
             )}

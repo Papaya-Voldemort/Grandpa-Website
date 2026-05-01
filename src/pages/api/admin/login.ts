@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { Account } from "node-appwrite";
-import { createServerClient, createSessionClient, getCookieName } from "../../../lib/appwrite";
+import { Query, createAdminServices, createServerClient, createSessionClient, getCookieName } from "../../../lib/appwrite";
 import { isAdminAllowed } from "../../../lib/auth";
 
 export const POST: APIRoute = async ({ request }) => {
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       const client = createServerClient(false);
       const account = new Account(client);
-      const session = await account.createEmailPasswordSession(email, password);
+      const session = await account.createEmailPasswordSession({ email, password });
 
       // Prevent a successful Appwrite login from entering admin unless allow-list checks pass.
       const { account: sessionAccount } = createSessionClient(session.secret);
@@ -62,15 +62,35 @@ export const POST: APIRoute = async ({ request }) => {
       const message = String(appwriteError?.message ?? "");
       const type = String(appwriteError?.type ?? "");
       const status = Number(appwriteError?.code ?? appwriteError?.status ?? 0);
+
+      const classifyInvalidCredentials = async () => {
+        try {
+          const { users } = createAdminServices();
+          const result = await users.list({
+            queries: [Query.equal("email", [email])],
+            total: false,
+          });
+          const users = result.users ?? [];
+          const exists = users.some((user) => String(user.email ?? "").toLowerCase() === email);
+          return exists ? "password_not_set_or_wrong" : "email_not_found_in_project";
+        } catch (lookupError) {
+          console.warn("Failed to run credential diagnostics:", lookupError);
+          return "invalid_credentials";
+        }
+      };
       
       // Handle Appwrite-specific errors
+      if (message.toLowerCase().includes("auth method") && message.toLowerCase().includes("disabled")) {
+        return redirectWithError("password_auth_disabled");
+      }
+
       if (
         status === 401 ||
         message.includes("Invalid credentials") ||
         message.includes("Invalid email") ||
         type.includes("invalid_credentials")
       ) {
-        return redirectWithError("invalid_credentials");
+        return redirectWithError(await classifyInvalidCredentials());
       }
 
       if (status === 429 || type.includes("rate_limit")) {

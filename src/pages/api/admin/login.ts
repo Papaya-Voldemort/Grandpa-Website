@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { Account } from "node-appwrite";
-import { createServerClient, getCookieName } from "../../../lib/appwrite";
+import { createServerClient, createSessionClient, getCookieName } from "../../../lib/appwrite";
+import { isAdminAllowed } from "../../../lib/auth";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -16,6 +17,24 @@ export const POST: APIRoute = async ({ request }) => {
       const client = createServerClient(false);
       const account = new Account(client);
       const session = await account.createEmailPasswordSession(email, password);
+
+      // Prevent a successful Appwrite login from entering admin unless allow-list checks pass.
+      const { account: sessionAccount } = createSessionClient(session.secret);
+      const user = await sessionAccount.get();
+      const adminCandidate = {
+        userId: user.$id,
+        email: user.email ?? null,
+        name: user.name ?? null,
+      };
+      if (!isAdminAllowed(adminCandidate)) {
+        const redirectUrl = new URL("/admin/login/?error=not_allowed", request.url).toString();
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: redirectUrl,
+          },
+        });
+      }
 
       // Build Set-Cookie header value manually
       const cookieName = getCookieName();

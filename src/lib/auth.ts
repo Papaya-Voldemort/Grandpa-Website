@@ -3,6 +3,18 @@ import { createSessionClient, getCookieName } from "./appwrite";
 import { getAppwriteConfig } from "./env";
 import type { AdminSession } from "./types";
 
+export function isAdminAllowed(current: AdminSession): boolean {
+  const { adminEmails, adminUserIds } = getAppwriteConfig();
+  const allowedByEmail = current.email ? adminEmails.includes(current.email.toLowerCase()) : false;
+  const allowedById = adminUserIds.includes(current.userId);
+
+  if (adminEmails.length === 0 && adminUserIds.length === 0) {
+    return true;
+  }
+
+  return allowedByEmail || allowedById;
+}
+
 export async function getCurrentSession(cookies: AstroCookies): Promise<AdminSession | null> {
   const cookieName = getCookieName();
   const session = cookies.get(cookieName)?.value;
@@ -33,14 +45,7 @@ export async function requireAdminSession(cookies: AstroCookies) {
     return null;
   }
 
-  const { adminEmails, adminUserIds } = getAppwriteConfig();
-  const allowedByEmail = current.email ? adminEmails.includes(current.email.toLowerCase()) : false;
-  const allowedById = adminUserIds.includes(current.userId);
-  if (adminEmails.length === 0 && adminUserIds.length === 0) {
-    return current;
-  }
-
-  if (allowedByEmail || allowedById) {
+  if (isAdminAllowed(current)) {
     return current;
   }
 

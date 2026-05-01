@@ -1,13 +1,21 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getCurrentSession } from "../../lib/auth";
+import { getCurrentSession, isAdminAllowed } from "../../lib/auth";
 
 export const prerender = false;
 
 const session = await getCurrentSession(Astro.cookies);
-if (session) {
+const error = Astro.url.searchParams.get("error") ?? "";
+const isAllowed = session ? isAdminAllowed(session) : false;
+
+if (session && isAllowed) {
   return Astro.redirect("/admin/", 302);
 }
+
+const errorMessage =
+  error === "not_allowed" || (session && !isAllowed)
+    ? "This account signed in successfully, but it is not approved for admin access. Ask the site owner to add your email to APPWRITE_ADMIN_EMAILS or your user ID to APPWRITE_ADMIN_USER_IDS."
+    : null;
 ---
 
 <BaseLayout title="Post Maker Login | Stephen M. Bird" pageClass="admin-login" showSidebar={false}>
@@ -15,6 +23,8 @@ if (session) {
     <h1>Post Maker Login</h1>
     <p>Sign in with your Appwrite email and password to manage posts, archive old stories, and publish new ones.</p>
     <p>If admin allow-list env vars are set, only those approved Appwrite accounts can enter.</p>
+
+    {errorMessage ? <p class="admin-notice">{errorMessage}</p> : null}
 
     <form class="card auth-card" method="post" action="/api/admin/login">
       <div class="form-grid">

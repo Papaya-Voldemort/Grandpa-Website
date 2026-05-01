@@ -60,6 +60,31 @@ function getAdminAuthConfig(): AdminAuthConfig {
   };
 }
 
+// Support multiple admin users via ADMIN_AUTH_USERS env var.
+// Format: comma-separated entries, each entry: email|password|name (name optional)
+function getAdminAuthUsers(): Array<{ email: string; password: string; name: string }> {
+  const raw = getEnvVar("ADMIN_AUTH_USERS") || "";
+  const entries = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (entries.length === 0) {
+    // Fallback to single ADMIN_AUTH_EMAIL / PASSWORD
+    const cfg = getAdminAuthConfig();
+    if (cfg.email && cfg.password) {
+      return [{ email: cfg.email, password: cfg.password, name: cfg.name }];
+    }
+    return [];
+  }
+
+  const parsed = entries.map((entry) => {
+    const parts = entry.split("|");
+    const email = normalizeEmail(parts[0] ?? "");
+    const password = parts[1] ?? "";
+    const name = parts[2] ?? "Admin";
+    return { email, password, name };
+  }).filter(u => u.email && u.password);
+
+  return parsed;
+}
+
 function signPayload(payloadBase64: string, secret: string): string {
   return createHmac("sha256", secret).update(payloadBase64).digest("base64url");
 }
@@ -101,8 +126,9 @@ function parseSignedSession(token: string): SignedSessionPayload | null {
 }
 
 export function isAdminAuthConfigured(): boolean {
-  const { email, password, sessionSecret } = getAdminAuthConfig();
-  return Boolean(email && password && sessionSecret);
+  const cfg = getAdminAuthConfig();
+  const users = getAdminAuthUsers();
+  return Boolean(cfg.sessionSecret && users.length > 0);
 }
 
 export function getAdminAuthCookieName(): string {
@@ -131,32 +157,20 @@ export function createAdminSessionToken(session: AdminSession): string {
 }
 
 export function validateAdminCredentials(email: string, password: string): AdminSession | null {
-  const config = getAdminAuthConfig();
   const normalizedEmail = normalizeEmail(email);
-  if (!config.email || !config.password || !config.sessionSecret) {
-    return null;
+  const users = getAdminAuthUsers();
+  for (const u of users) {
+    if (safeEqual(normalizedEmail, u.email) && safeEqual(password, u.password)) {
+      return { userId: buildUserId(u.email), email: u.email, name: u.name };
+    }
   }
-
-  const emailMatches = safeEqual(normalizedEmail, config.email);
-  const passwordMatches = safeEqual(password, config.password);
-  if (!emailMatches || !passwordMatches) {
-    return null;
-  }
-
-  return {
-    userId: buildUserId(config.email),
-    email: config.email,
-    name: config.name,
-  };
+  return null;
 }
 
 export function isAdminAllowed(current: AdminSession): boolean {
-  const { email } = getAdminAuthConfig();
-  if (!email) {
-    return false;
-  }
-
-  return normalizeEmail(current.email || "") === email && current.userId === buildUserId(email);
+  const users = getAdminAuthUsers();
+  const normalized = normalizeEmail(current.email || "");
+  return users.some((u) => normalized === u.email && current.userId === buildUserId(u.email));
 }
 
 export async function getCurrentSession(cookies: AstroCookies): Promise<AdminSession | null> {

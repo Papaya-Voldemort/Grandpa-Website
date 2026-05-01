@@ -13,32 +13,24 @@ if (session && isAllowed) {
 }
 
 const errorMessage =
-  error === "not_allowed" || (session && !isAllowed)
-    ? "This account signed in successfully, but it is not approved for admin access. Ask the site owner to add your email to APPWRITE_ADMIN_EMAILS or your user ID to APPWRITE_ADMIN_USER_IDS."
-    : error === "password_not_set_or_wrong"
-      ? "That email exists in this Appwrite project, but the password is incorrect or not set. If the account was created via OAuth, set/reset a password in Appwrite before using email login."
-      : error === "email_not_found_in_project"
-        ? "That email does not exist in the configured Appwrite project. This usually means APPWRITE_PROJECT_ID points to a different project than the one where your users were created."
-        : error === "password_auth_disabled"
-          ? "Email/password auth is disabled in Appwrite. Enable Email + Password in Appwrite Auth settings for this project."
-          : error === "invalid_credentials"
-            ? "Invalid email or password for this Appwrite project."
-      : error === "project_mismatch"
-        ? "The site cannot authenticate against the configured Appwrite project. Verify APPWRITE_URL and APPWRITE_PROJECT_ID in production env vars."
-        : error === "rate_limited"
-          ? "Too many login attempts. Wait a moment, then try again."
-          : error === "missing_credentials"
-            ? "Please enter both email and password."
-            : error === "server_error" || error === "auth_failed"
-              ? "Sign in failed due to a server-side error. Please try again, then check server logs if it continues."
+  (session && !isAllowed)
+    ? "Your session is not authorized for admin access."
+    : error === "invalid_credentials"
+      ? "Invalid email or password."
+      : error === "auth_not_configured"
+        ? "Admin auth is not configured. Set ADMIN_AUTH_EMAIL, ADMIN_AUTH_PASSWORD, and ADMIN_AUTH_SESSION_SECRET in production env vars."
+        : error === "missing_credentials"
+          ? "Please enter both email and password."
+          : error === "server_error"
+            ? "Sign in failed due to a server-side error."
     : null;
 ---
 
 <BaseLayout title="Post Maker Login | Stephen M. Bird" pageClass="admin-login" showSidebar={false}>
   <div class="panel">
     <h1>Post Maker Login</h1>
-    <p>Sign in with your Appwrite email and password to manage posts, archive old stories, and publish new ones.</p>
-    <p>If admin allow-list env vars are set, only those approved Appwrite accounts can enter.</p>
+    <p>Sign in with the admin email and password configured in environment variables.</p>
+    <p>This login does not use Appwrite authentication.</p>
 
     {errorMessage ? <p class="admin-notice">{errorMessage}</p> : null}
 

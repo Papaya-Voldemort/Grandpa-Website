@@ -4,13 +4,23 @@ import { createServerClient, createSessionClient, getCookieName } from "../../..
 import { isAdminAllowed } from "../../../lib/auth";
 
 export const POST: APIRoute = async ({ request }) => {
+  const redirectWithError = (errorCode: string) => {
+    const redirectUrl = new URL(`/admin/login/?error=${encodeURIComponent(errorCode)}`, request.url).toString();
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: redirectUrl,
+      },
+    });
+  };
+
   try {
     const form = await request.formData();
-    const email = String(form.get("email") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
     const password = String(form.get("password") ?? "");
 
     if (!email || !password) {
-      return new Response("Missing email or password.", { status: 400 });
+      return redirectWithError("missing_credentials");
     }
 
     try {
@@ -27,13 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
         name: user.name ?? null,
       };
       if (!isAdminAllowed(adminCandidate)) {
-        const redirectUrl = new URL("/admin/login/?error=not_allowed", request.url).toString();
-        return new Response(null, {
-          status: 302,
-          headers: {
-            Location: redirectUrl,
-          },
-        });
+        return redirectWithError("not_allowed");
       }
 
       // Build Set-Cookie header value manually
@@ -55,25 +59,32 @@ export const POST: APIRoute = async ({ request }) => {
       return response;
     } catch (appwriteError: any) {
       console.error("Appwrite error:", appwriteError);
+      const message = String(appwriteError?.message ?? "");
+      const type = String(appwriteError?.type ?? "");
+      const status = Number(appwriteError?.code ?? appwriteError?.status ?? 0);
       
       // Handle Appwrite-specific errors
-      if (appwriteError?.message?.includes("Invalid credentials") || appwriteError?.message?.includes("Invalid email")) {
-        return new Response("Invalid email or password.", { status: 401 });
+      if (
+        status === 401 ||
+        message.includes("Invalid credentials") ||
+        message.includes("Invalid email") ||
+        type.includes("invalid_credentials")
+      ) {
+        return redirectWithError("invalid_credentials");
       }
-      
-      if (appwriteError?.message?.includes("not configured")) {
-        return new Response("Server configuration error. Please contact administrator.", { status: 503 });
+
+      if (status === 429 || type.includes("rate_limit")) {
+        return redirectWithError("rate_limited");
       }
-      
-      if (appwriteError?.code === 401 || appwriteError?.status === 401) {
-        return new Response("Invalid email or password.", { status: 401 });
+
+      if (message.includes("not configured") || status === 404 || type.includes("project_not_found")) {
+        return redirectWithError("project_mismatch");
       }
-      
-      // Default to 401 for authentication failures
-      return new Response(appwriteError?.message || "Unable to sign in.", { status: 401 });
+
+      return redirectWithError("auth_failed");
     }
   } catch (error: any) {
     console.error("Unexpected login error:", error);
-    return new Response("Internal server error. Please try again later.", { status: 500 });
+    return redirectWithError("server_error");
   }
 };

@@ -15,6 +15,16 @@ if (session && isAllowed) {
 const errorMessage =
   error === "not_allowed" || (session && !isAllowed)
     ? "This account signed in successfully, but it is not approved for admin access. Ask the site owner to add your email to APPWRITE_ADMIN_EMAILS or your user ID to APPWRITE_ADMIN_USER_IDS."
+    : error === "invalid_credentials"
+      ? "Invalid email or password for this Appwrite project. If this account was created with an OAuth provider, it may not have a password yet."
+      : error === "project_mismatch"
+        ? "The site cannot authenticate against the configured Appwrite project. Verify APPWRITE_URL and APPWRITE_PROJECT_ID in production env vars."
+        : error === "rate_limited"
+          ? "Too many login attempts. Wait a moment, then try again."
+          : error === "missing_credentials"
+            ? "Please enter both email and password."
+            : error === "server_error" || error === "auth_failed"
+              ? "Sign in failed due to a server-side error. Please try again, then check server logs if it continues."
     : null;
 ---
 

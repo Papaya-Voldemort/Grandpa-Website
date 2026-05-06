@@ -1,6 +1,6 @@
-import { c as createComponent } from './astro-component_BhUZwqY9.mjs';
+import { c as createComponent } from './astro-component_B70esp_X.mjs';
 import 'piccolore';
-import './entrypoint_BjHBL06r.mjs';
+import './entrypoint_CRcM7-3f.mjs';
 import 'clsx';
 import { g as getPostBySlug, a as getCanonicalPostPath, c as getPostByCategoryAndSlug } from './posts-server_B9fCINhK.mjs';
 

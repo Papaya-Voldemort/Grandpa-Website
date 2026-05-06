@@ -1,7 +1,7 @@
-import { c as createComponent } from './astro-component_BhUZwqY9.mjs';
+import { c as createComponent } from './astro-component_B70esp_X.mjs';
 import 'piccolore';
-import { l as renderComponent, r as renderTemplate, m as maybeRenderHead } from './entrypoint_BjHBL06r.mjs';
-import { $ as $$BaseLayout } from './BaseLayout_BJkAhuu4.mjs';
+import { l as renderComponent, r as renderTemplate, m as maybeRenderHead } from './entrypoint_CRcM7-3f.mjs';
+import { $ as $$BaseLayout } from './BaseLayout_QBuS1F1d.mjs';
 
 const $$404 = createComponent(($$result, $$props, $$slots) => {
   return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "title": "Not Found | Stephen M. Bird", "pageClass": "not-found", "showSidebar": false }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="panel"> <h1>Page Not Found</h1> <p>The page you were looking for could not be found. If this used to be an old \`.html\` link, the migration may still be in progress.</p> <p><a class="action-button" href="/">Return Home</a></p> </div> ` })}`;
